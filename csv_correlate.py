@@ -1,0 +1,2 @@
+def findStartForce():
+    print("hi")

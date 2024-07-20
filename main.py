@@ -6,7 +6,7 @@ def main():
     print(force_start)
     mocap_start = findStartMocap()
     print(mocap_start)
-    verifyPlot(0,0)
+    verifyPlot(force_start, mocap_start)
 
 if __name__ == "__main__":
     main()

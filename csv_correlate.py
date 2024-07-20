@@ -9,7 +9,7 @@ force_file = None
 mocap_file = None
 r = None
 
-frequency_interval = 10
+frequency_interval = 1
 
 def fileStatus():
     global force_file
@@ -119,24 +119,62 @@ def copyMocapTime():
 # takes in time at the start force time index, sets start mocap time equal to that 
 # and will subsequent mocap time measurements equal to that time unless the 
 # next mocap time difference is exceeded by the force   
-def shiftMocapTime(mocap_time_array, force_time_array, force_start_index, mocap_start_index):
+def shiftMocapTime(mocap_time_array, mocap_force_array,force_time_array, force_start_index, mocap_start_index):
     #Sets the starting time of the mocap array to the start time of the force
-    mocap_time_array[mocap_start_index] = force_time_array[force_start_index]
-    mocap_end_iterator = 0
-    for element in mocap_time_array:
-        if mocap_end_iterator > mocap_start_index:
+    #mocap_time_array[mocap_start_index] = force_time_array[force_start_index]
+    # counter for the selected index of the mocap array
+    #mocap_end_iterator = 0
+    # counter for the insertion value into the mocap array from the force array 
+    # counts 0 through 7 and then resets 
+    #force_iterator = 0
+    # force_8_increment = 0
+    #force_indexer = force_start_index
+    #for element in mocap_time_array:
+    #    if mocap_end_iterator > mocap_start_index:
+            #edit the latter half
             #After the start, apply 0 order interpolation (add )
             # insert 7 time readings that are just same top mocap reading
-        mocap_end_iterator += 1
+   #         if mocap_end_iterator % 6 > 0:
+                # fills in the 7 blanks
+   #             mocap_time_array.insert(mocap_end_iterator + force_iterator, force_time_array[force_start_index])
+                #mocap_force_array.insert(mocap_end_iterator + force_iterator, mocap_force_array[element])
+    #            force_iterator += 1
+    #        else:
+    #            force_iterator = 0
+    #            mocap_time_array[mocap_end_iterator] = force_time_array[force_indexer]
+    #        force_indexer +=1
 
+    #    force_8_increment +=8        
+    #    mocap_end_iterator += 1
+
+# So the difference between mocap times will be about 0.008, and the force diff will
+# be 0.001. The difference between 2 adjacent mocap times will be noted,
+# and force filler time values will be put into the mocap data with force time and mocap height
+# untill the time difference between the first measured time value of force  
 
 # use mocap's spirit height and knee height and graph the two
+
+## NOW just shift by appropriate amount
+
+    #Sets the starting time of the mocap array to the start time of the force
+    mocap_time_array[mocap_start_index] = force_time_array[force_start_index]
+
+    for i in range(len(mocap_time_array)):
+        # if actual start is 5 and first index is 1, 4 second difference. 
+        #take the 4 second difference from 
+        time_offset = mocap_time_array[i] - mocap_time_array[mocap_start_index]
+        mocap_time_array[i] = force_time_array[force_start_index] + time_offset
+
 def verifyPlot(force_start, mocap_start):
     mocap_height = copyMocapHeights()
     force_height = copyForceForces()
     force_time = copyForceTime()
     mocap_time = copyMocapTime()
-    
+    print("first item of mocap time before:")
+    print(mocap_time[0])
+    shiftMocapTime(mocap_time, mocap_height, force_time, force_start, mocap_start)
+    print("first item of mocap time before:")
+    print(mocap_time[0])
     #print("force_height:")
     #print(force_height)
     #print("Force time: ") 
@@ -145,8 +183,8 @@ def verifyPlot(force_start, mocap_start):
     #print(mocap_height)
     #print("Mocap time:")
     #print(mocap_time)
-    plt.plot(force_height, force_time, label="Knee(force)")
-    plt.plot(mocap_height, mocap_time, label ="SPIRIT(mocap)")
+    plt.plot(force_time, force_height, label="Knee(force)")
+    plt.plot(mocap_time, mocap_height, label ="SPIRIT(mocap)")
     plt.xlabel('Time (s)')
     plt.ylabel('Height()')
     plt.legend(loc='best')

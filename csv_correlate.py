@@ -131,7 +131,7 @@ def shiftMocapTime(mocap_time_array, force_time_array, force_start_index, mocap_
             print(f"Offset:{time_offset}")
             mocap_time_array[i] = force_time_array[force_start_index] + time_offset 
 
-    print(mocap_time_array)
+    #print(mocap_time_array)
 def verifyPlot(force_start, mocap_start):
     mocap_height = copyMocapHeights()
     force_height = copyForceForces()
@@ -142,23 +142,27 @@ def verifyPlot(force_start, mocap_start):
     shiftMocapTime(mocap_time, force_time, force_start, mocap_start, 17)
     print("first item of mocap time after:")
     print(mocap_time[0])
-    #print("force_height:")
-    #print(force_height)
-    #print("Force time: ") 
-    #print(force_time)
-    #print("Mocap height: ")
-    #print(mocap_height)
-    #print("Mocap time:")
-    #print(mocap_time)
     plt.plot(force_time, force_height, label="Knee(force)")
     plt.plot(mocap_time, mocap_height, label ="SPIRIT(mocap)")
     plt.xlabel('Time (s)')
     plt.ylabel('Height()')
     plt.legend(loc='best')
     plt.title("Mocap-force SPIRIT height to knee height over time")
-    print("Showing...")
+    print('Writing new data to mocap file...')
+    appendColumn(mocap_time)
+    print("Done. Showing...")
     plt.show()
 
-def changeMocaptimes():
-    pass
-            
+def appendColumn(mocap_time):
+    with open(mocap_file,'r') as csv_file:
+        reader = csv.reader(csv_file)
+        data = list(reader)
+    
+    data[6].insert(2, 'Adjusted Time (seconds)')  
+    for i in range(1, len(mocap_time)):
+        print(i)
+        data[i].append(mocap_time[i-1])
+
+    with open(mocap_file, 'w', newline='') as write_file:
+        writer = csv.writer(write_file)
+        writer.writerows(data)

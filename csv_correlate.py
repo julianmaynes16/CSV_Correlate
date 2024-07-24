@@ -152,13 +152,13 @@ def verifyPlot(force_start, mocap_start):
     plt.ylabel('Height()')
     plt.legend(loc='best')
     plt.title("Mocap-force SPIRIT height to leg height over time")
-    print('Writing new data to mocap file...')
-    appendColumn(mocap_time)
     print("Generating leg step times...")
     step_list = stepChop(force_height, force_time)
     #print(step_list)
     for item in step_list:
         plt.axvline(x=item, color = 'r', label = 'step')
+    print('Writing new data to mocap file...')
+    appendColumn(mocap_time)
     print("Done. Showing...")
     plt.show()
 #once properly aligned, find the times where a leg is put on the ground
@@ -180,10 +180,13 @@ def appendColumn(mocap_time):
         reader = csv.reader(csv_file)
         data = list(reader)
     
-    data[6].insert(2, 'Adjusted Time (seconds)')  
-    for i in range(1, len(mocap_time)):
-        #print(i)
-        data[i].append(mocap_time[i-1])
+    for i in range(1, len(data)):
+        if(i < len(mocap_time)):
+
+            if i==6:
+                data[i].append('Adjusted Time (seconds)')
+            elif i > 6:
+                data[i].append(mocap_time[i-1])
 
     with open(mocap_file, 'w', newline='') as write_file:
         writer = csv.writer(write_file)

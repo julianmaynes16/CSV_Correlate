@@ -34,6 +34,7 @@ def findStartForce():
         for row in reader:
             column_value = row['Leg 0 Z force']
             force_index +=1
+            #print(column_value)
             if float(column_value) < -30:
                 return force_index
                 print("Done.")
@@ -89,7 +90,8 @@ def copyForceForces():
         print("Copying force data for visualization...")
         for row in reader:
             if (force_force_iterator > 0) and not(force_force_iterator % frequency_interval):
-                force_height.append(abs(float(row[47])) * 1000)
+                #force_height.append(abs(float(row[47])) * 1000)
+                force_height.append(float(row[47]) * 1000)
             force_force_iterator += 1
         print("Done.")
         return force_height
@@ -120,15 +122,17 @@ def copyMocapTime():
 
 def shiftMocapTime(mocap_time_array, force_time_array, force_start_index, mocap_start_index, error_offset):
     mocap_og_start_time = mocap_time_array[mocap_start_index]
+    #print("mocap_og_start_time: " + str(mocap_og_start_time))
     #Sets the starting time of the mocap array to the start time of the force
-    mocap_time_array[mocap_start_index] = force_time_array[force_start_index]
-    print(mocap_time_array)
+    mocap_time_array[mocap_start_index] = force_time_array[force_start_index] + error_offset
+    #print("adjusted start time: " + str(mocap_time_array[mocap_start_index]))
+    #print(mocap_time_array)
     for i in range(len(mocap_time_array)):
         # if actual start is 5 and first index is 1, 4 second difference. 
         #take the 4 second difference from 
         if(i != mocap_start_index):
             time_offset = mocap_time_array[i] - mocap_og_start_time + error_offset
-            print(f"Offset:{time_offset}")
+                #print(f"Offset:{time_offset}")
             mocap_time_array[i] = force_time_array[force_start_index] + time_offset 
 
     #print(mocap_time_array)
@@ -137,21 +141,39 @@ def verifyPlot(force_start, mocap_start):
     force_height = copyForceForces()
     force_time = copyForceTime()
     mocap_time = copyMocapTime()
-    print("first item of mocap time before:")
-    print(mocap_time[0])
+    
+  
     shiftMocapTime(mocap_time, force_time, force_start, mocap_start, 17)
-    print("first item of mocap time after:")
-    print(mocap_time[0])
-    plt.plot(force_time, force_height, label="Knee(force)")
+    
+    
+    plt.plot(force_time, force_height, label="leg0(low-level)")
     plt.plot(mocap_time, mocap_height, label ="SPIRIT(mocap)")
     plt.xlabel('Time (s)')
     plt.ylabel('Height()')
     plt.legend(loc='best')
-    plt.title("Mocap-force SPIRIT height to knee height over time")
+    plt.title("Mocap-force SPIRIT height to leg height over time")
     print('Writing new data to mocap file...')
     appendColumn(mocap_time)
+    print("Generating leg step times...")
+    step_list = stepChop(force_height, force_time)
+    #print(step_list)
+    for item in step_list:
+        plt.axvline(x=item, color = 'r', label = 'step')
     print("Done. Showing...")
     plt.show()
+#once properly aligned, find the times where a leg is put on the ground
+def stepChop(force_height, force_time):
+    recent_high = 0
+    step_array = []
+    for i in range(1, len(force_height)):
+        if force_height[i] > recent_high:
+            recent_high = force_height[i]
+        elif force_height[i] < recent_high:
+            if recent_high > (force_height[i] + 120):
+                recent_high = force_height[i]
+                step_array.append(force_time[i])
+    return step_array
+
 
 def appendColumn(mocap_time):
     with open(mocap_file,'r') as csv_file:
@@ -160,7 +182,7 @@ def appendColumn(mocap_time):
     
     data[6].insert(2, 'Adjusted Time (seconds)')  
     for i in range(1, len(mocap_time)):
-        print(i)
+        #print(i)
         data[i].append(mocap_time[i-1])
 
     with open(mocap_file, 'w', newline='') as write_file:

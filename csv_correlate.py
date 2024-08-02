@@ -162,7 +162,7 @@ def verifyPlot(force_start, mocap_start):
 
     print("Generating leg step times...")
     # chops up leg stuff on plot
-    step_list = stepChop(force_height, force_time, 20)
+    step_list = stepChop(force_height, force_time)
     # writes chops to plot
     for item in step_list:
         plt.axvline(x=item, color = 'r', label = 'step')
@@ -175,27 +175,38 @@ def verifyPlot(force_start, mocap_start):
     plt.show()
 
 # once properly aligned, find the times where a leg is put on the ground
-def stepChop(force_height, force_time, step_threshold):
+def stepChop(force_height, force_time):
     recent_high = 0
     step_array = []
     plateu = False
-    plateu_count = 0
-    # If a leg moves up, the height difference it makes must be greater than a certain threshold for it to count as a step
+    skip_this_spike = False
     for i in range(1, len(force_height)):
-        if (not (i % 10)) and (force_height[i] == force_height[i-10]):
-            plateu = True
+        if((i % 5000) == 0):
+            # The smallest change stays constant for like 10,000 frames
+            if force_height[i] == force_height[i - 5000]:
+                plateu = True
+                #print("Plateu")
+                skip_this_spike= True
+            else:
+                plateu = False
+        if(skip_this_spike):
+            if(force_height[i] > force_height[i-1]): #if stops declining and flattens out or increases
+                print("Entered")
+                skip_this_spike = False
+                recent_high = -400
         else:
-            plateu = False
-        if force_height[i] > recent_high:
-             recent_high = force_height[i]
-        elif force_height[i] < recent_high:
-            if recent_high > (force_height[i] + step_threshold):
-                if plateu == False:
-                    recent_high = force_height[i]
-                    step_array.append(force_time[i])
-                elif plateu == True:
-                    plateu = False
-    print(f"Steps skipped: {plateu_count}")
+            if force_height[i] > recent_high:
+                recent_high = force_height[i]
+            elif force_height[i] < recent_high:
+                if recent_high > (force_height[i] + 120):
+                    if(plateu):
+                        plateu = False
+                        skip_this_spike = True
+                        continue
+                    else:
+                        print(f"Recent high: {recent_high}")
+                        recent_high = force_height[i]
+                        step_array.append(force_time[i])
     return step_array
 
 

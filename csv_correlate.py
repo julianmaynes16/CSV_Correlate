@@ -181,30 +181,34 @@ def stepChop(force_height, force_time):
     plateu = False
     skip_this_spike = False
     for i in range(1, len(force_height)):
-        if((i % 5000) == 0):
-            # The smallest change stays constant for like 10,000 frames
-            if force_height[i] == force_height[i - 5000]:
+        if((i % 8000) == 0):
+            # Every 8k frames looks at the low level height 4k frames before, if equal, plateu detected
+            if force_height[i] == force_height[i - 4000]:
                 plateu = True
-                #print("Plateu")
-                skip_this_spike= True
+                skip_this_spike = True
             else:
+                skip_this_spike = False
                 plateu = False
+        #If a plateu has been detected
         if(skip_this_spike):
-            if(force_height[i] > force_height[i-1]): #if stops declining and flattens out or increases
-                print("Entered")
+            #If the plateu dips down, meaning a sitdown, recent high will be overwritten next frame
+            if(force_height[i] < force_height[i-1]):
+                # Proceeds with usual subroutine
                 skip_this_spike = False
                 recent_high = -400
         else:
+            # If the height increases, a leg is moving up, updating that height to the recent highest
             if force_height[i] > recent_high:
                 recent_high = force_height[i]
+            # If the height starts to dip
             elif force_height[i] < recent_high:
+                # The dip has to be significant enough 
                 if recent_high > (force_height[i] + 120):
+                    # If a plateu had been previously detected
                     if(plateu):
                         plateu = False
                         skip_this_spike = True
-                        continue
                     else:
-                        print(f"Recent high: {recent_high}")
                         recent_high = force_height[i]
                         step_array.append(force_time[i])
     return step_array

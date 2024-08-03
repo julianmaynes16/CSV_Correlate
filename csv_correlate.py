@@ -150,6 +150,7 @@ def verifyPlot(force_start, mocap_start):
     mocap_time = copyMocapTime()
     
     # shifts the mocap stuff here
+    print("Shifting Mocap time data to match low level")
     shiftMocapTime(mocap_time, force_time, force_start, mocap_start, 17)
     
     #handles plotting info
@@ -172,7 +173,7 @@ def verifyPlot(force_start, mocap_start):
     print('Writing new data to mocap file...')
     appendTimeColumn(mocap_time)
     print("Writing leg step data")
-    appendLegColumn(force_time, step_list)
+    appendLegColumn(mocap_time, step_list)
     print("Done. Showing...")
     plt.show()
 
@@ -228,26 +229,27 @@ def appendTimeColumn(mocap_time):
         writer = csv.writer(write_file)
         writer.writerows(data)
 
-def appendLegColumn(force_time, step_list):
+def appendLegColumn(mocap_time, step_list):
+    step_time_index = 0
     # 0 is no movement, 1 is leg movement
     with open(mocap_file,'r') as csv_file:
         reader = csv.reader(csv_file)
         data = list(reader)
     
     for i in range(1, len(data)):
-        if(i < len(force_time)):
+        if(i < len(mocap_time)):
             if i==6:
                 data[i].append('Leg status')
             elif i > 6:
                 # Goes through every time of steps, if the times match, append the status
-                for step_time in step_list:
-                    print(f"Step time: {step_time}")
-                    print(f"Force time: {force_time[i]}")
-                    if force_time[i] == step_time:
+                if(step_time_index < len(step_list)):
+                    if round(mocap_time[i], 2) == round(step_list[step_time_index], 2):
                         data[i].append(1)
-                        print("found match")
+                        step_time_index += 1
                     else:
                         data[i].append(0)
+                else:
+                    data[i].append(0)
 
     with open(mocap_file, 'w', newline='') as write_file:
         writer = csv.writer(write_file)

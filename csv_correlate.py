@@ -170,7 +170,9 @@ def verifyPlot(force_start, mocap_start):
     print(step_list)
     # Writes synchronized time to the mocap file
     print('Writing new data to mocap file...')
-    appendColumn(mocap_time)
+    appendTimeColumn(mocap_time)
+    print("Writing leg step data")
+    appendLegColumn(force_time, step_list)
     print("Done. Showing...")
     plt.show()
 
@@ -181,41 +183,35 @@ def stepChop(force_height, force_time):
     plateu = False
     skip_this_spike = False
     for i in range(1, len(force_height)):
-        if((i % 8000) == 0):
-            # Every 8k frames looks at the low level height 4k frames before, if equal, plateu detected
+        # Looks for plateus ever 8k frames. If plateu already detected we don't want it to cancel out of being a plateu with the else 
+        if((i % 8000) == 0) and (not plateu):
+            # Looks at the low level height 4k frames before, if equal, plateu detected
             if force_height[i] == force_height[i - 4000]:
                 plateu = True
-                skip_this_spike = True
             else:
-                skip_this_spike = False
                 plateu = False
-        #If a plateu has been detected
-        if(skip_this_spike):
-            #If the plateu dips down, meaning a sitdown, recent high will be overwritten next frame
-            if(force_height[i] < force_height[i-1]):
-                # Proceeds with usual subroutine
-                skip_this_spike = False
+        # Plateu detected subroutine
+        if(plateu):
+            # If the low level leg height begins to rise considerably, end of standing and sitting and beginning rising 
+            if(round(force_height[i], 4) > (round(force_height[i-50] + 10, 4))):
+                plateu = False
                 recent_high = -400
         else:
             # If the height increases, a leg is moving up, updating that height to the recent highest
             if force_height[i] > recent_high:
                 recent_high = force_height[i]
-            # If the height starts to dip
+            # If the leg height starts to dip
             elif force_height[i] < recent_high:
-                # The dip has to be significant enough 
+                # The leg dip has to be significant enough 
                 if recent_high > (force_height[i] + 120):
-                    # If a plateu had been previously detected
-                    if(plateu):
-                        plateu = False
-                        skip_this_spike = True
-                    else:
-                        recent_high = force_height[i]
-                        step_array.append(force_time[i])
+                    # Adds time of leg movement to list. 
+                    recent_high = force_height[i]
+                    step_array.append(force_time[i])
     return step_array
 
 
 # writes new times to the csv in mocap
-def appendColumn(mocap_time):
+def appendTimeColumn(mocap_time):
     with open(mocap_file,'r') as csv_file:
         reader = csv.reader(csv_file)
         data = list(reader)
@@ -231,3 +227,30 @@ def appendColumn(mocap_time):
     with open(mocap_file, 'w', newline='') as write_file:
         writer = csv.writer(write_file)
         writer.writerows(data)
+
+def appendLegColumn(force_time, step_list):
+    # 0 is no movement, 1 is leg movement
+    with open(mocap_file,'r') as csv_file:
+        reader = csv.reader(csv_file)
+        data = list(reader)
+    
+    for i in range(1, len(data)):
+        if(i < len(force_time)):
+            if i==6:
+                data[i].append('Leg status')
+            elif i > 6:
+                # Goes through every time of steps, if the times match, append the status
+                for step_time in step_list:
+                    print(f"Step time: {step_time}")
+                    print(f"Force time: {force_time[i]}")
+                    if force_time[i] == step_time:
+                        data[i].append(1)
+                        print("found match")
+                    else:
+                        data[i].append(0)
+
+    with open(mocap_file, 'w', newline='') as write_file:
+        writer = csv.writer(write_file)
+        writer.writerows(data)
+
+# Write something that gives you an array of times that the leg has moved, SAVE THE TIMES SOMEWHERE (json maybe) (want video offset, file names of all files connected, list of all starting step times in each csv) press for next step (start of steptimes), go to step 100. use a video player that reads frames like open cv 

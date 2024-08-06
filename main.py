@@ -9,8 +9,9 @@ def main():
     #verifyPlot(force_start, mocap_start)
 
     videoStatus()
-    playVideo()
-
+    #playVideo()
+    #playVideoGif(3000, 5)
+    openWindow()
 
 if __name__ == "__main__":
     main()

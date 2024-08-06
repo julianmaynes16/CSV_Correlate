@@ -1,7 +1,12 @@
-from glob import glob
 import os
 import pandas as pd
 import csv
+from PySide6.QtCore import *
+from PySide6.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtMultimedia import *
+from PySide6.QtMultimediaWidgets import *
+import sys
 import cv2
 import time
 import matplotlib.pyplot as plt
@@ -313,3 +318,80 @@ def playVideo():
 
     # Closes all the frames
     cv2.destroyAllWindows()
+
+def playVideoGif(input_frame, seconds_before_loop):
+    video_frame = 0
+    cap = cv2.VideoCapture(video_file)
+    cap.set(1, input_frame)
+    if (cap.isOpened()== False):
+        print("Error playing video...")
+    else:
+        print("Playing...")
+    last_imshow_time = time.time()
+    loop_begin = time.time()
+    frame_rate = cap.get(cv2.CAP_PROP_FPS)
+    print(f"fps: {frame_rate}")
+    while(cap.isOpened()):
+        # Capture frame-by-frame
+        
+        if ((time.time() - loop_begin) > seconds_before_loop):
+            print(f"frame: {input_frame}")
+            cap.set(1, input_frame)
+            loop_begin = time.time()
+        ret, frame = cap.read()
+
+        #print(thirty_fps_diff)
+        while (time.time() - last_imshow_time)< (1/frame_rate):
+            pass
+        #read_time_end = time.time()
+        #read_diff = read_time_begin-read_time_end
+        #print(f"Read time difference: {read_diff}")
+        #print(f"Video frame: {video_frame}")
+        
+        video_frame+=1
+        if ret == True:
+            # Display the resulting frame
+            #show_time_begin = time.time()
+            last_imshow_time = time.time()
+            cv2.imshow('Frame', frame)
+            #show_time_end = time.time()
+            #show_diff = show_time_begin - show_time_end
+            #print(f"Show time difference: {show_diff}")
+            # Press Q on keyboard to exit
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+            
+        # Break the loop
+        else:
+            break
+        
+    # When everything done, release
+    # the video capture object
+    cap.release()
+
+    # Closes all the frames
+    cv2.destroyAllWindows()
+
+def openWindow():
+    
+    class MainWindow(QMainWindow):
+        def __init__(self):
+            super().__init__()
+
+            self.setWindowTitle("RoboCorrelate")
+            self.setMinimumSize(QSize(400,300))
+            player = QMediaPlayer()
+            player.setSource(video_file)
+            videoWidget = QVideoWidget()
+            player.setVideoOutput(videoWidget)
+            videoWidget.show()
+            player.play()
+
+            
+    #QApplication instance containing cmdline args
+    app = QApplication(sys.argv)
+    #window 
+    window = MainWindow()
+    window.show()
+
+    app.exec()

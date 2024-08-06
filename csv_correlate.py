@@ -2,11 +2,14 @@ from glob import glob
 import os
 import pandas as pd
 import csv
+import cv2
+import time
 import matplotlib.pyplot as plt
 
 
 force_file = None 
 mocap_file = None
+video_file = None
 r = None
 # dictates how many samples should be registered every x steps. Lower = more samples
 frequency_interval = 1
@@ -256,3 +259,57 @@ def appendLegColumn(mocap_time, step_list):
         writer.writerows(data)
 
 # Write something that gives you an array of times that the leg has moved, SAVE THE TIMES SOMEWHERE (json maybe) (want video offset, file names of all files connected, list of all starting step times in each csv) press for next step (start of steptimes), go to step 100. use a video player that reads frames like open cv 
+def videoStatus():
+    global video_file
+    video_file_list = os.listdir(os.path.join(os.getcwd(), 'video'))
+    for file in video_file_list: 
+        if ((file.endswith('.mp4')) or (file.endswith('.MOV'))):
+            video_file = os.path.join(os.path.join(os.getcwd(), 'video'), file)
+            print("Found video file!")
+    
+def playVideo():
+    video_frame = 0
+    cap = cv2.VideoCapture(video_file)
+    if (cap.isOpened()== False):
+        print("Error playing video...")
+    else:
+        print("Playing...")
+    last_imshow_time = time.time()
+    frame_rate = cap.get(cv2.CAP_PROP_FPS)
+    print(f"fps: {frame_rate}")
+    while(cap.isOpened()):
+        # Capture frame-by-frame
+        #read_time_begin = time.time()
+        ret, frame = cap.read()
+
+        #print(thirty_fps_diff)
+        while (time.time() - last_imshow_time)< (1/frame_rate):
+            pass
+        #read_time_end = time.time()
+        #read_diff = read_time_begin-read_time_end
+        #print(f"Read time difference: {read_diff}")
+        #print(f"Video frame: {video_frame}")
+        
+        video_frame+=1
+        if ret == True:
+            # Display the resulting frame
+            #show_time_begin = time.time()
+            last_imshow_time = time.time()
+            cv2.imshow('Frame', frame)
+            #show_time_end = time.time()
+            #show_diff = show_time_begin - show_time_end
+            #print(f"Show time difference: {show_diff}")
+            # Press Q on keyboard to exit
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+            
+        # Break the loop
+        else:
+            break
+
+    # When everything done, release
+    # the video capture object
+    cap.release()
+
+    # Closes all the frames
+    cv2.destroyAllWindows()

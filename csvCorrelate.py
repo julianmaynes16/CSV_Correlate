@@ -16,6 +16,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationTool
 from matplotlib.figure import Figure
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
+from videoProcessing import *
 
 
 force_file = None 
@@ -409,22 +410,12 @@ def playVideoGif(input_frame, seconds_before_loop):
 
 def openWindow(input_frame, seconds_before_loop):
 
-    class MplCanvas(FigureCanvasQTAgg):
-        def __init__(self, parent=None, width=3, height=2, dpi=100):
-            self.fig = Figure(figsize=(width, height), dpi=dpi)
-            self.fig.tight_layout()
-            self.axes = self.fig.add_subplot(111)
-            super(MplCanvas, self).__init__(self.fig)
-
-
-
     class MainWindow(QMainWindow):
         def __init__(self):
             super().__init__()
 
             
             #Main setup
-            #self.setStyleSheet("background-color: white;")
             self.setWindowTitle("RoboCorrelate")
             self.setMinimumSize(QSize(800,700))
             
@@ -447,60 +438,40 @@ def openWindow(input_frame, seconds_before_loop):
 
             #crosshair lines
             self.crosshair_v = pg.InfiniteLine(angle=90, movable=False)
-            #self.crosshair_h = pg.InfiniteLine(angle=0, movable=False)
             self.graphWidget.addItem(self.crosshair_v, ignoreBounds=True)
-            #self.graphWidget.addItem(self.crosshair_h, ignoreBounds=True)
         
             self.proxy = pg.SignalProxy(self.graphWidget.scene().sigMouseMoved, rateLimit=30, slot=self.update_crosshair)
             #Resize graph
             self.graphWidget.setFixedSize(600, 400)  # Adjust the size as needed
             self.graphWidget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-            #self.setCentralWidget(self.graphWidget)
-
-        #Video
-            self.cap = cv2.VideoCapture(video_file)
-            self.cap.set(1, input_frame)
-            self.frame_rate = self.cap.get(cv2.CAP_PROP_FPS)
 
             self.label = QLabel(self)
-            
-            
         #layout
             layout = QVBoxLayout()
             layout.addWidget(self.label, alignment= Qt.AlignTop | Qt.AlignLeft)
             layout.addWidget(self.graphWidget)
-            #layout.addWidget(self.canvas)
 
             central_widget = QWidget()
             central_widget.setLayout(layout)
             self.setCentralWidget(central_widget)
 
-            self.loop_begin = time.time()
-            
-            self.timer = QTimer(self)
-            self.timer.timeout.connect(self.update_frame)
-            self.timer.start((1/self.frame_rate) * 1000)  # Update frame every 30 milliseconds
-            
-        def update_frame(self):
-            if ((time.time() - self.loop_begin) > seconds_before_loop):
-                self.cap.set(1, input_frame)
-                self.loop_begin = time.time()
-            ret, frame = self.cap.read()
-            if ret:
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB for PyQt
-                height, width, channel = frame.shape
-                img = QImage(frame, width, height, QImage.Format_RGB888) 
-                pix = QPixmap.fromImage(img)
-                pix = pix.scaled(400,300, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                self.label.setPixmap(pix)
+            self.thread = VideoThread(video_file, input_frame, seconds_before_loop)
+            self.thread.change_pixmap_signal.connect(self.update_image)
+            self.threat.start()
+
+        def update_image(self,pixmap): 
+            self.label.setPixmap(pixmap.scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+
         def update_crosshair(self, e):
             pos = e[0]
             if self.graphWidget.sceneBoundingRect().contains(pos):
                 mousePoint = self.graphWidget.getPlotItem().vb.mapSceneToView(pos)
                 self.crosshair_v.setPos(mousePoint.x())
                 #self.crosshair_h.setPos(mousePoint.y())
-
-            
+        def closeEvent(self,event):
+            self.thread.stop()
+            event.accept()
+        
     #QApplication instance containing cmdline args
     app = QApplication.instance()
     if app is None:

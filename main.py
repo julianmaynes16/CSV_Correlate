@@ -1,4 +1,4 @@
-from csv_correlate import *
+from csvCorrelate import *
 
 def main():
     csvAlter(False)

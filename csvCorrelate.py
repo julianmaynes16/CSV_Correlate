@@ -26,6 +26,7 @@ mocap_height = None
 mocap_time = None
 
 step_list = None
+
 # dictates how many samples should be registered every x steps. Lower = more samples
 frequency_interval = 1
 # prints out messages if able to find the files in the folders
@@ -286,6 +287,15 @@ def barXToY(bar_x):
     for i in range(len(force_time)):
         if force_time[i] >= bar_x:
             return force_height[i]
+        
+def inputFrameToGraphX(input_frame):
+    # turn frame 3000 into an x coordinate
+
+    # we know the first x by the first index of time
+    # The camera fps should be calculated
+    # The Video is 30 frames
+    # So we need to get a starting value 
+
 
 def csvAlter(show_plot):
     fileStatus()
@@ -295,9 +305,10 @@ def csvAlter(show_plot):
     print(mocap_start)
     verifyPlot(force_start, mocap_start, show_plot)
 
-def videoSync():
+
+def videoSync(input_frame, seconds_before_loop):
     videoStatus()
-    openWindow(3000, 5)
+    openWindow(input_frame, seconds_before_loop)
 
 # Write something that gives you an array of times that the leg has moved, SAVE THE TIMES SOMEWHERE (json maybe) (want video offset, file names of all files connected, list of all starting step times in each csv) press for next step (start of steptimes), go to step 100. use a video player that reads frames like open cv 
 def videoStatus():
@@ -409,12 +420,13 @@ def playVideoGif(input_frame, seconds_before_loop):
     cv2.destroyAllWindows()
 
 def openWindow(input_frame, seconds_before_loop):
-
     class MainWindow(QMainWindow):
         def __init__(self):
             super().__init__()
-
             
+        
+            self.loop_time = time.time()
+
             #Main setup
             #self.setStyleSheet("background-color: white;")
             self.setWindowTitle("RoboCorrelate")
@@ -478,12 +490,22 @@ def openWindow(input_frame, seconds_before_loop):
 
         def update_image(self,pixmap): 
             self.label.setPixmap(pixmap.scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            print(time.time() - self.loop_time)
+            if ((time.time() - self.loop_time) > seconds_before_loop):
+                self.loop_time = time.time()
+                #Set crosshair back to where the input_frame is
+                self.crosshair_v.setPos(self.crosshair_v.setPos())
+            self.crosshair_v.setPos(self.crosshair_v.x() + (time.time() - self.loop_time))
 
         def update_crosshair(self, e):
+            #global mouse_pos
             pos = e[0]
             if self.graphWidget.sceneBoundingRect().contains(pos):
                 mousePoint = self.graphWidget.getPlotItem().vb.mapSceneToView(pos)
                 self.crosshair_v.setPos(mousePoint.x())
+                #mouse_pos = 
+                #print(self.crosshair_v.x())
+                
                 self.ballWidget.update_ball_position(barXToY(mousePoint.x()))
                 #print(barXToY(mousePoint.x()))
         #turn the x time into a height

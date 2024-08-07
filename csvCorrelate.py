@@ -6,17 +6,13 @@ from PySide6.QtWidgets import *
 from PySide6.QtGui import *
 from PySide6.QtMultimedia import *
 from PySide6.QtMultimediaWidgets import *
-from pyqtgraph import PlotWidget, plot
 import pyqtgraph as pg
 import sys
 import cv2
 import time
-import matplotlib
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
-from matplotlib.figure import Figure
-matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 from videoProcessing import *
+from ballWidget import *
 
 
 force_file = None 
@@ -286,6 +282,10 @@ def appendLegColumn(mocap_time, step_list):
         writer = csv.writer(write_file)
         writer.writerows(data)
 
+def barXToY(bar_x):
+    for i in range(len(force_time)):
+        if force_time[i] >= bar_x:
+            return force_height[i]
 
 def csvAlter(show_plot):
     fileStatus()
@@ -445,16 +445,32 @@ def openWindow(input_frame, seconds_before_loop):
             #Resize graph
             self.graphWidget.setFixedSize(600, 400)  # Adjust the size as needed
             self.graphWidget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+            
+            #ball widget
+            self.ballWidget = BallWidget()
 
             self.label = QLabel(self)
         #layout
-            layout = QVBoxLayout()
-            layout.addWidget(self.label, alignment= Qt.AlignTop | Qt.AlignLeft)
-            layout.addWidget(self.graphWidget)
+            layout_h = QHBoxLayout()
+            layout_h.addWidget(self.label)
+            layout_h.addWidget(self.ballWidget)
+
+            layout_v = QVBoxLayout()
+            layout_v.addLayout(layout_h)
+            layout_v.addWidget(self.graphWidget)
+            
 
             central_widget = QWidget()
-            central_widget.setLayout(layout)
+            central_widget.setLayout(layout_v)
             self.setCentralWidget(central_widget)
+            #layout_v = QVBoxLayout()
+            #layout_v.addWidget(self.label, alignment= Qt.AlignTop | Qt.AlignLeft)
+            #layout_v.addWidget(self.graphWidget)
+            #layout_v.addWidget(self.ballWidget)
+
+            #central_widget = QWidget()
+            #central_widget.setLayout(layout)
+            #self.setCentralWidget(central_widget)
 
             self.thread = VideoThread(video_file, input_frame, seconds_before_loop)
             self.thread.change_pixmap_signal.connect(self.update_image)
@@ -468,7 +484,12 @@ def openWindow(input_frame, seconds_before_loop):
             if self.graphWidget.sceneBoundingRect().contains(pos):
                 mousePoint = self.graphWidget.getPlotItem().vb.mapSceneToView(pos)
                 self.crosshair_v.setPos(mousePoint.x())
-                #self.crosshair_h.setPos(mousePoint.y())
+                self.ballWidget.update_ball_position(barXToY(mousePoint.x()))
+                #print(barXToY(mousePoint.x()))
+        #turn the x time into a height
+        
+                  
+            
         def closeEvent(self,event):
             self.thread.stop()
             event.accept()

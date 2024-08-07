@@ -372,7 +372,7 @@ def playVideoGif(input_frame, seconds_before_loop):
     # Closes all the frames
     cv2.destroyAllWindows()
 
-def openWindow():
+def openWindow(input_frame, seconds_before_loop):
     
     class MainWindow(QMainWindow):
         def __init__(self):
@@ -382,26 +382,35 @@ def openWindow():
             self.setMinimumSize(QSize(800,700))
             
             self.cap = cv2.VideoCapture(video_file)
+            self.cap.set(1, input_frame)
+            self.frame_rate = self.cap.get(cv2.CAP_PROP_FPS)
+
             self.label = QLabel(self)
             
             central_widget = QWidget(self)
             self.setCentralWidget(central_widget)
 
             layout = QVBoxLayout(central_widget)
-            layout.addWidget(self.label)
+            layout.addWidget(self.label, alignment= Qt.AlignTop | Qt.AlignLeft)
+            
 
+            self.loop_begin = time.time()
+            
             self.timer = QTimer(self)
             self.timer.timeout.connect(self.update_frame)
-            self.timer.start(30)  # Update frame every 30 milliseconds
+            self.timer.start((1/self.frame_rate) * 1000)  # Update frame every 30 milliseconds
             
         def update_frame(self):
+            if ((time.time() - self.loop_begin) > seconds_before_loop):
+                self.cap.set(1, input_frame)
+                self.loop_begin = time.time()
             ret, frame = self.cap.read()
             if ret:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB for PyQt
                 height, width, channel = frame.shape
                 img = QImage(frame, width, height, QImage.Format_RGB888) 
                 pix = QPixmap.fromImage(img)
-                pix = pix.scaled(800,600, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                pix = pix.scaled(400,300, Qt.KeepAspectRatio, Qt.SmoothTransformation)
                 self.label.setPixmap(pix)
 
             

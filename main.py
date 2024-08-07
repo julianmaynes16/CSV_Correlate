@@ -11,7 +11,7 @@ def main():
     videoStatus()
     #playVideo()
     #playVideoGif(3000, 5)
-    openWindow()
+    openWindow(3000, 5)
     #playVideoInWindow()
 
 if __name__ == "__main__":

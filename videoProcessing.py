@@ -19,6 +19,7 @@ class VideoThread(QThread):
     def __init__(self, video_file, input_frame, seconds_before_loop):
         super().__init__()
         self._run_flag = True
+        self.input_frame = input_frame
         self.cap = cv2.VideoCapture(video_file)
         self.cap.set(1, input_frame)
         self.frame_rate = self.cap.get(cv2.CAP_PROP_FPS)

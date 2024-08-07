@@ -416,6 +416,7 @@ def openWindow(input_frame, seconds_before_loop):
 
             
             #Main setup
+            #self.setStyleSheet("background-color: white;")
             self.setWindowTitle("RoboCorrelate")
             self.setMinimumSize(QSize(800,700))
             
@@ -423,17 +424,17 @@ def openWindow(input_frame, seconds_before_loop):
             
             self.graphWidget = pg.PlotWidget()
             #Set background to white
-            self.graphWidget.setBackground('w')
+            self.graphWidget.setBackground('#1E1E1E')
             #Set title
-            self.graphWidget.setTitle("Low-Level Data ", color="b", size="15pt")
+            self.graphWidget.setTitle("Low-Level Data ", color="w", size="15pt")
             #Set axis labels
-            styles = {"color": "#f00", "font-size": "15px"}
+            styles = {"color": "#fff", "font-size": "15px"}
             self.graphWidget.setLabel("left", "Leg Height (mm)", **styles)
             self.graphWidget.setLabel("bottom", "Time (s)", **styles)
             #Add grid
             self.graphWidget.showGrid(x=True, y=True)
 
-            pen = pg.mkPen(color=(255, 0, 0), width = 3)
+            pen = pg.mkPen(color=(255, 255, 255), width = 3)
             self.graphWidget.plot(force_time, force_height, pen=pen)
 
             #crosshair lines
@@ -457,7 +458,7 @@ def openWindow(input_frame, seconds_before_loop):
 
             self.thread = VideoThread(video_file, input_frame, seconds_before_loop)
             self.thread.change_pixmap_signal.connect(self.update_image)
-            self.threat.start()
+            self.thread.start()
 
         def update_image(self,pixmap): 
             self.label.setPixmap(pixmap.scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation))

@@ -288,13 +288,26 @@ def barXToY(bar_x):
         if force_time[i] >= bar_x:
             return force_height[i]
         
-def inputFrameToGraphX(input_frame):
+def inputFrameToGraphXFrame(data_type, input_frame):
+    
     # turn frame 3000 into an x coordinate
 
     # we know the first x by the first index of time
     # The camera fps should be calculated
     # The Video is 30 frames
-    # So we need to get a starting value 
+    # So we need to get a starting value
+    video_fps = 30
+    if(data_type == "mocap"):
+        data_fps = 120
+        graph_x_start = mocap_time[0]
+    elif(data_type == "force"):
+        data_fps = 1000
+        graph_x_start = force_time[0]
+        #should be like 442.19
+    return(((1/video_fps) * input_frame) * data_fps) # returns the frame where the input frame
+    
+    
+
 
 
 def csvAlter(show_plot):

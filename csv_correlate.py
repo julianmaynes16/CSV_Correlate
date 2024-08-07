@@ -6,9 +6,15 @@ from PySide6.QtWidgets import *
 from PySide6.QtGui import *
 from PySide6.QtMultimedia import *
 from PySide6.QtMultimediaWidgets import *
+from pyqtgraph import PlotWidget, plot
+import pyqtgraph as pg
 import sys
 import cv2
 import time
+import matplotlib
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
+from matplotlib.figure import Figure
+matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 
 
@@ -16,6 +22,13 @@ force_file = None
 mocap_file = None
 video_file = None
 r = None
+
+force_height = None
+force_time = None
+mocap_height = None
+mocap_time = None
+
+step_list = None
 # dictates how many samples should be registered every x steps. Lower = more samples
 frequency_interval = 1
 # prints out messages if able to find the files in the folders
@@ -151,8 +164,16 @@ def shiftMocapTime(mocap_time_array, force_time_array, force_start_index, mocap_
             mocap_time_array[i] = force_time_array[force_start_index] + time_offset 
 # Shifts the mocap times, plots the data, chops of the data based on leg movement, writes new time to original mocap csv
 # a lot of things happen here becase the copy commands take so much time 
-def verifyPlot(force_start, mocap_start):
+def verifyPlot(force_start, mocap_start, show_plot):
+
+    global force_height
+    global force_time
+    global mocap_height
+    global mocap_time
+    global step_list
+
     mocap_height = copyMocapHeights()
+    #Custom leg input
     force_height = copyForceForces(0)
     force_time = copyForceTime()
     mocap_time = copyMocapTime()
@@ -182,8 +203,9 @@ def verifyPlot(force_start, mocap_start):
     appendTimeColumn(mocap_time)
     print("Writing leg step data")
     appendLegColumn(mocap_time, step_list)
-    print("Done. Showing...")
-    plt.show()
+    if(show_plot):
+        print("Done. Showing...")
+        plt.show()
 
 # once properly aligned, find the times where a leg is put on the ground
 def stepChop(force_height, force_time):
@@ -262,6 +284,19 @@ def appendLegColumn(mocap_time, step_list):
     with open(mocap_file, 'w', newline='') as write_file:
         writer = csv.writer(write_file)
         writer.writerows(data)
+
+
+def csvAlter(show_plot):
+    fileStatus()
+    force_start = findStartForce()
+    print(force_start)
+    mocap_start = findStartMocap()
+    print(mocap_start)
+    verifyPlot(force_start, mocap_start, show_plot)
+
+def videoSync():
+    videoStatus()
+    openWindow(3000, 5)
 
 # Write something that gives you an array of times that the leg has moved, SAVE THE TIMES SOMEWHERE (json maybe) (want video offset, file names of all files connected, list of all starting step times in each csv) press for next step (start of steptimes), go to step 100. use a video player that reads frames like open cv 
 def videoStatus():
@@ -373,26 +408,48 @@ def playVideoGif(input_frame, seconds_before_loop):
     cv2.destroyAllWindows()
 
 def openWindow(input_frame, seconds_before_loop):
-    
+
+    class MplCanvas(FigureCanvasQTAgg):
+        def __init__(self, parent=None, width=3, height=2, dpi=100):
+            self.fig = Figure(figsize=(width, height), dpi=dpi)
+            self.fig.tight_layout()
+            self.axes = self.fig.add_subplot(111)
+            super(MplCanvas, self).__init__(self.fig)
+
+
+
     class MainWindow(QMainWindow):
         def __init__(self):
             super().__init__()
 
+            
+            #Main setup
+            #self.setStyleSheet("background-color: white;")
             self.setWindowTitle("RoboCorrelate")
             self.setMinimumSize(QSize(800,700))
             
+            #Plot
+            
+            self.canvas = MplCanvas(self,width=3, height=2, dpi=100)
+            self.canvas.axes.plot(force_time, force_height, 'r')
+            self.canvas.draw()
+
+            #Video
             self.cap = cv2.VideoCapture(video_file)
             self.cap.set(1, input_frame)
             self.frame_rate = self.cap.get(cv2.CAP_PROP_FPS)
 
             self.label = QLabel(self)
             
-            central_widget = QWidget(self)
-            self.setCentralWidget(central_widget)
-
-            layout = QVBoxLayout(central_widget)
-            layout.addWidget(self.label, alignment= Qt.AlignTop | Qt.AlignLeft)
             
+            #layout
+            layout = QVBoxLayout()
+            layout.addWidget(self.label, alignment= Qt.AlignTop | Qt.AlignLeft)
+            layout.addWidget(self.canvas)
+
+            central_widget = QWidget()
+            central_widget.setLayout(layout)
+            self.setCentralWidget(central_widget)
 
             self.loop_begin = time.time()
             
@@ -412,10 +469,18 @@ def openWindow(input_frame, seconds_before_loop):
                 pix = QPixmap.fromImage(img)
                 pix = pix.scaled(400,300, Qt.KeepAspectRatio, Qt.SmoothTransformation)
                 self.label.setPixmap(pix)
+        def update_crosshair(self, e):
+            pos = e[0]
+            if self.graphWidget.sceneBoundingRect().contains(pos):
+                mousePoint = self.graphWidget.getPlotItem().vb.mapSceneToView(pos)
+                self.crosshair_v.setPos(mousePoint.x())
+                self.crosshair_h.setPos(mousePoint.y())
 
             
     #QApplication instance containing cmdline args
-    app = QApplication(sys.argv)
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication(sys.argv)
     #window 
     window = MainWindow()
     window.show()

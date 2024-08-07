@@ -428,13 +428,36 @@ def openWindow(input_frame, seconds_before_loop):
             self.setWindowTitle("RoboCorrelate")
             self.setMinimumSize(QSize(800,700))
             
-            #Plot
+        #Plot
             
-            self.canvas = MplCanvas(self,width=3, height=2, dpi=100)
-            self.canvas.axes.plot(force_time, force_height, 'r')
-            self.canvas.draw()
+            self.graphWidget = pg.PlotWidget()
+            #Set background to white
+            self.graphWidget.setBackground('w')
+            #Set title
+            self.graphWidget.setTitle("Low-Level Data ", color="b", size="15pt")
+            #Set axis labels
+            styles = {"color": "#f00", "font-size": "15px"}
+            self.graphWidget.setLabel("left", "Leg Height (mm)", **styles)
+            self.graphWidget.setLabel("bottom", "Time (s)", **styles)
+            #Add grid
+            self.graphWidget.showGrid(x=True, y=True)
 
-            #Video
+            pen = pg.mkPen(color=(255, 0, 0), width = 3)
+            self.graphWidget.plot(force_time, force_height, pen=pen)
+
+            #crosshair lines
+            self.crosshair_v = pg.InfiniteLine(angle=90, movable=False)
+            #self.crosshair_h = pg.InfiniteLine(angle=0, movable=False)
+            self.graphWidget.addItem(self.crosshair_v, ignoreBounds=True)
+            #self.graphWidget.addItem(self.crosshair_h, ignoreBounds=True)
+        
+            self.proxy = pg.SignalProxy(self.graphWidget.scene().sigMouseMoved, rateLimit=30, slot=self.update_crosshair)
+            #Resize graph
+            self.graphWidget.setFixedSize(600, 400)  # Adjust the size as needed
+            self.graphWidget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+            #self.setCentralWidget(self.graphWidget)
+
+        #Video
             self.cap = cv2.VideoCapture(video_file)
             self.cap.set(1, input_frame)
             self.frame_rate = self.cap.get(cv2.CAP_PROP_FPS)
@@ -442,10 +465,11 @@ def openWindow(input_frame, seconds_before_loop):
             self.label = QLabel(self)
             
             
-            #layout
+        #layout
             layout = QVBoxLayout()
             layout.addWidget(self.label, alignment= Qt.AlignTop | Qt.AlignLeft)
-            layout.addWidget(self.canvas)
+            layout.addWidget(self.graphWidget)
+            #layout.addWidget(self.canvas)
 
             central_widget = QWidget()
             central_widget.setLayout(layout)
@@ -474,7 +498,7 @@ def openWindow(input_frame, seconds_before_loop):
             if self.graphWidget.sceneBoundingRect().contains(pos):
                 mousePoint = self.graphWidget.getPlotItem().vb.mapSceneToView(pos)
                 self.crosshair_v.setPos(mousePoint.x())
-                self.crosshair_h.setPos(mousePoint.y())
+                #self.crosshair_h.setPos(mousePoint.y())
 
             
     #QApplication instance containing cmdline args
@@ -486,5 +510,6 @@ def openWindow(input_frame, seconds_before_loop):
     window.show()
 
     app.exec()
+
 def playVideoInWindow():
     pass 

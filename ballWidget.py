@@ -27,5 +27,5 @@ class BallWidget(QWidget):
         painter.drawEllipse(self.ball_x - self.ball_radius, self.ball_y - self.ball_radius, self.ball_radius * 2, self.ball_radius * 2)
 
     def update_ball_position(self, y):
-        self.ball_y = ((-15/10)*y)-44
+        self.ball_y = (-1.2 * float(y))-32
         self.update()

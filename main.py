@@ -12,6 +12,7 @@ def main():
     #playVideo()
     #playVideoGif(3000, 5)
     openWindow()
+    #playVideoInWindow()
 
 if __name__ == "__main__":
     main()

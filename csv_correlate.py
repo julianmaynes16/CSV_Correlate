@@ -379,13 +379,30 @@ def openWindow():
             super().__init__()
 
             self.setWindowTitle("RoboCorrelate")
-            self.setMinimumSize(QSize(400,300))
-            player = QMediaPlayer()
-            player.setSource(video_file)
-            videoWidget = QVideoWidget()
-            player.setVideoOutput(videoWidget)
-            videoWidget.show()
-            player.play()
+            self.setMinimumSize(QSize(800,700))
+            
+            self.cap = cv2.VideoCapture(video_file)
+            self.label = QLabel(self)
+            
+            central_widget = QWidget(self)
+            self.setCentralWidget(central_widget)
+
+            layout = QVBoxLayout(central_widget)
+            layout.addWidget(self.label)
+
+            self.timer = QTimer(self)
+            self.timer.timeout.connect(self.update_frame)
+            self.timer.start(30)  # Update frame every 30 milliseconds
+            
+        def update_frame(self):
+            ret, frame = self.cap.read()
+            if ret:
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB for PyQt
+                height, width, channel = frame.shape
+                img = QImage(frame, width, height, QImage.Format_RGB888) 
+                pix = QPixmap.fromImage(img)
+                pix = pix.scaled(800,600, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                self.label.setPixmap(pix)
 
             
     #QApplication instance containing cmdline args
@@ -395,3 +412,5 @@ def openWindow():
     window.show()
 
     app.exec()
+def playVideoInWindow():
+    pass 

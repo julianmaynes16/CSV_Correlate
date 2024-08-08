@@ -447,37 +447,7 @@ def openWindow(input_frame, seconds_before_loop):
             self.setWindowTitle("RoboCorrelate")
             self.setMinimumSize(QSize(800,700))
             
-        #Plot
-            
-            self.graphWidget = pg.PlotWidget()
-            #Set background to white
-            self.graphWidget.setBackground('#1E1E1E')
-            #Set title
-            self.graphWidget.setTitle("Low-Level Data ", color="w", size="15pt")
-            #Set axis labels
-            styles = {"color": "#fff", "font-size": "15px"}
-            self.graphWidget.setLabel("left", "Leg Height (mm)", **styles)
-            self.graphWidget.setLabel("bottom", "Time (s)", **styles)
-            #Add grid
-            self.graphWidget.showGrid(x=True, y=True)
-
-            pen = pg.mkPen(color=(255, 255, 255), width = 3)
-            cursor_pen = pg.mkPen(color = (255,0,0), width = 1)
-            moving_pen = pg.mkPen(color = (255, 165, 0), width = 1)
-            self.graphWidget.plot(force_time, force_height, pen=pen)
-
-            #crosshair lines
-            self.crosshair_v = pg.InfiniteLine(angle=90, movable=False, pen=moving_pen)
-            self.graphWidget.addItem(self.crosshair_v, ignoreBounds=True)
-            self.crosshair_cursor = pg.InfiniteLine(angle=90, movable=False, pen=cursor_pen)
-            self.graphWidget.addItem(self.crosshair_cursor, ignoreBounds=True)
-        
-            self.proxy = pg.SignalProxy(self.graphWidget.scene().sigMouseMoved, rateLimit=30, slot=self.update_crosshair)
-            #Resize graph
-            self.graphWidget.setFixedSize(600, 400)  # Adjust the size as needed
-            self.graphWidget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-            
-            #ball widget
+             #ball widget
             self.ballWidget = BallWidget()
 
             self.label = QLabel(self)
@@ -494,19 +464,13 @@ def openWindow(input_frame, seconds_before_loop):
             central_widget = QWidget()
             central_widget.setLayout(layout_v)
             self.setCentralWidget(central_widget)
-            #layout_v = QVBoxLayout()
-            #layout_v.addWidget(self.label, alignment= Qt.AlignTop | Qt.AlignLeft)
-            #layout_v.addWidget(self.graphWidget)
-            #layout_v.addWidget(self.ballWidget)
 
-            #central_widget = QWidget()
-            #central_widget.setLayout(layout)
-            #self.setCentralWidget(central_widget)
+            self.video_thread = VideoThread(video_file, input_frame, seconds_before_loop)
+            self.video_thread.change_pixmap_signal.connect(self.update_image)
+            self.video_thread.change_pixmap_signal.connect(self.move_crosshair)
+            self.video_thread.start()
 
-            self.thread = VideoThread(video_file, input_frame, seconds_before_loop)
-            self.thread.change_pixmap_signal.connect(self.update_image)
-            self.thread.change_pixmap_signal.connect(self.move_crosshair)
-            self.thread.start()
+            #self.threadpool = QThreadPool()
 
         def update_image(self,pixmap): 
             self.label.setPixmap(pixmap.scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation))

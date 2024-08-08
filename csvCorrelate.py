@@ -181,19 +181,21 @@ def verifyPlot(force_start, mocap_start, show_plot):
     shiftMocapTime(mocap_time, force_time, force_start, mocap_start, 17)
     
     #handles plotting info
-    plt.plot(force_time, force_height, label="leg0(low-level)")
-    plt.plot(mocap_time, mocap_height, label ="SPIRIT(mocap)")
-    plt.xlabel('Time (s)')
-    plt.ylabel('Height()')
-    plt.legend(loc='best')
-    plt.title("Mocap-force SPIRIT height to leg height over time")
+    if(show_plot):
+        plt.plot(force_time, force_height, label="leg0(low-level)")
+        plt.plot(mocap_time, mocap_height, label ="SPIRIT(mocap)")
+        plt.xlabel('Time (s)')
+        plt.ylabel('Height()')
+        plt.legend(loc='best')
+        plt.title("Mocap-force SPIRIT height to leg height over time")
 
     print("Generating leg step times...")
     # chops up leg stuff on plot
     step_list = stepChop(force_height, force_time)
     # writes chops to plot
-    for item in step_list:
-        plt.axvline(x=item, color = 'r', label = 'step')
+    if(show_plot):
+        for item in step_list:
+            plt.axvline(x=item, color = 'r', label = 'step')
     print("Legs moved at these times:")
     print(step_list)
     # Writes synchronized time to the mocap file

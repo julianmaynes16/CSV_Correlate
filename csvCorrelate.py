@@ -304,7 +304,7 @@ def inputFrameToGraphXFrame(data_type, input_frame):
         data_fps = 1000
         graph_x_start = force_time[0]
         #should be like 442.19
-    return(((1/video_fps) * input_frame) * data_fps) # returns the frame where the input frame
+    return(int(((1/video_fps) * input_frame) * data_fps)) # returns the frame where the input frame
     
     
 
@@ -437,7 +437,7 @@ def openWindow(input_frame, seconds_before_loop):
         def __init__(self):
             super().__init__()
             
-        
+            self.thirty_fps_begin_linemove = time.time()
             self.loop_time = time.time()
 
             #Main setup
@@ -460,11 +460,15 @@ def openWindow(input_frame, seconds_before_loop):
             self.graphWidget.showGrid(x=True, y=True)
 
             pen = pg.mkPen(color=(255, 255, 255), width = 3)
+            cursor_pen = pg.mkPen(color = (255,0,0), width = 1)
+            moving_pen = pg.mkPen(color = (255, 165, 0), width = 1)
             self.graphWidget.plot(force_time, force_height, pen=pen)
 
             #crosshair lines
-            self.crosshair_v = pg.InfiniteLine(angle=90, movable=False)
+            self.crosshair_v = pg.InfiniteLine(angle=90, movable=False, pen=moving_pen)
             self.graphWidget.addItem(self.crosshair_v, ignoreBounds=True)
+            self.crosshair_cursor = pg.InfiniteLine(angle=90, movable=False, pen=cursor_pen)
+            self.graphWidget.addItem(self.crosshair_cursor, ignoreBounds=True)
         
             self.proxy = pg.SignalProxy(self.graphWidget.scene().sigMouseMoved, rateLimit=30, slot=self.update_crosshair)
             #Resize graph
@@ -499,31 +503,34 @@ def openWindow(input_frame, seconds_before_loop):
 
             self.thread = VideoThread(video_file, input_frame, seconds_before_loop)
             self.thread.change_pixmap_signal.connect(self.update_image)
+            self.thread.change_pixmap_signal.connect(self.move_crosshair)
             self.thread.start()
 
         def update_image(self,pixmap): 
             self.label.setPixmap(pixmap.scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-            print(time.time() - self.loop_time)
-            if ((time.time() - self.loop_time) > seconds_before_loop):
-                self.loop_time = time.time()
-                #Set crosshair back to where the input_frame is
-                self.crosshair_v.setPos(self.crosshair_v.setPos())
-            self.crosshair_v.setPos(self.crosshair_v.x() + (time.time() - self.loop_time))
+            
+                
+        def move_crosshair(self, e):
+            line_move_index = 1
+            if(time.time() - self.thirty_fps_begin_linemove) > (1/30):
+                self.thirty_fps_begin_linemove = time.time()
+                line_move_index = (1/30)
+                if ((time.time() - self.loop_time) > seconds_before_loop):
+                    self.loop_time = time.time()
+                    #Set crosshair back to where the input_frame is
+                    self.crosshair_v.setPos(force_time[inputFrameToGraphXFrame("force", input_frame)])
+                self.crosshair_v.setPos(self.crosshair_v.x() + line_move_index)
+                self.ballWidget.update_ball_position(barXToY(self.crosshair_v.x()))
+                line_move_index += (1/30)
 
         def update_crosshair(self, e):
-            #global mouse_pos
             pos = e[0]
             if self.graphWidget.sceneBoundingRect().contains(pos):
                 mousePoint = self.graphWidget.getPlotItem().vb.mapSceneToView(pos)
+                self.crosshair_cursor.setPos(mousePoint.x())
                 self.crosshair_v.setPos(mousePoint.x())
-                #mouse_pos = 
-                #print(self.crosshair_v.x())
                 
-                self.ballWidget.update_ball_position(barXToY(mousePoint.x()))
-                #print(barXToY(mousePoint.x()))
-        #turn the x time into a height
-        
-                  
+
             
         def closeEvent(self,event):
             self.thread.stop()

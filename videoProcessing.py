@@ -25,20 +25,23 @@ class VideoThread(QThread):
         self.frame_rate = self.cap.get(cv2.CAP_PROP_FPS)
         self.seconds_before_loop = seconds_before_loop
         self.loop_begin = time.time()
+        self.thirtyfps_begin = time.time()
 
     def run(self):
         while self._run_flag:
             if (time.time() - self.loop_begin) > self.seconds_before_loop:
                 self.cap.set(1, self.input_frame)
                 self.loop_begin = time.time()
-            ret, frame = self.cap.read()
-            if ret:
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                height, width, channel = frame.shape
-                img = QImage(frame, width, height, QImage.Format_RGB888)
-                pix = QPixmap.fromImage(img)
-                self.change_pixmap_signal.emit(pix)
-            time.sleep(1 / self.frame_rate)
+            if(time.time() - self.thirtyfps_begin) > (1/self.frame_rate):
+                self.thirtyfps_begin = time.time()
+                ret, frame = self.cap.read()
+                if ret:
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    height, width, channel = frame.shape
+                    img = QImage(frame, width, height, QImage.Format_RGB888)
+                    pix = QPixmap.fromImage(img)
+                    self.change_pixmap_signal.emit(pix)
+            
 
     def stop(self):
         self._run_flag = False

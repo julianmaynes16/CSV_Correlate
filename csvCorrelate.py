@@ -439,70 +439,44 @@ def openWindow(input_frame, seconds_before_loop):
         def __init__(self):
             super().__init__()
             
-            self.thirty_fps_begin_linemove = time.time()
-            self.loop_time = time.time()
+            #self.thirty_fps_begin_linemove = time.time()
+            #self.loop_time = time.time()
 
-            #Main setup
-            #self.setStyleSheet("background-color: white;")
+        # Main window setup
             self.setWindowTitle("RoboCorrelate")
             self.setMinimumSize(QSize(800,700))
             
-             #ball widget
+        # Ball widget
             self.ballWidget = BallWidget()
 
+        # Video
             self.label = QLabel(self)
-        #layout
+
+        #Lay the ball widget to the right of the video
             layout_h = QHBoxLayout()
             layout_h.addWidget(self.label)
             layout_h.addWidget(self.ballWidget)
-
+        # Lay the graph under everything
             layout_v = QVBoxLayout()
             layout_v.addLayout(layout_h)
             layout_v.addWidget(self.graphWidget)
             
-
+        #Center everything
             central_widget = QWidget()
             central_widget.setLayout(layout_v)
             self.setCentralWidget(central_widget)
-
+        # Establish video thread
             self.video_thread = VideoThread(video_file, input_frame, seconds_before_loop)
             self.video_thread.change_pixmap_signal.connect(self.update_image)
             self.video_thread.change_pixmap_signal.connect(self.move_crosshair)
             self.video_thread.start()
 
-            #self.threadpool = QThreadPool()
-
-        def update_image(self,pixmap): 
-            self.label.setPixmap(pixmap.scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation))
             
-                
-        def move_crosshair(self, e):
-            line_move_index = 1
-            if(time.time() - self.thirty_fps_begin_linemove) > (1/30):
-                self.thirty_fps_begin_linemove = time.time()
-                line_move_index = (1/30)
-                if ((time.time() - self.loop_time) > seconds_before_loop):
-                    self.loop_time = time.time()
-                    #Set crosshair back to where the input_frame is
-                    self.crosshair_v.setPos(force_time[inputFrameToGraphXFrame("force", input_frame)])
-                self.crosshair_v.setPos(self.crosshair_v.x() + line_move_index)
-                self.ballWidget.update_ball_position(barXToY(self.crosshair_v.x()))
-                line_move_index += (1/30)
-
-        def update_crosshair(self, e):
-            pos = e[0]
-            if self.graphWidget.sceneBoundingRect().contains(pos):
-                mousePoint = self.graphWidget.getPlotItem().vb.mapSceneToView(pos)
-                self.crosshair_cursor.setPos(mousePoint.x())
-                self.crosshair_v.setPos(mousePoint.x())
-                
-
-            
-        def closeEvent(self,event):
-            self.thread.stop()
-            event.accept()
+        #def closeEvent(self,event):
+        #    self.thread.stop()
+        #    event.accept()
         
-    #QApplication instance containing cmdline args
+# Make everything execute
     app = QApplication.instance()
     if app is None:
         app = QApplication(sys.argv)

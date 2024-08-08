@@ -20,6 +20,8 @@ class GraphThread(QThread):
     #Type of data being parsed
         self.plot_x = plot_x
         self.plot_y = plot_y
+        self.input_frame = input_frame
+        self.seconds_before_loop = seconds_before_loop
 
     #Cursor movement initialization
         self.thirty_fps_begin_linemove = time.time()
@@ -82,6 +84,7 @@ class GraphThread(QThread):
             self.crosshair_v.setPos(mousePoint.x())   
 
     def run(self):
+        self.graphWidget.scene().sigMouseMoved.connect()
 
         
 

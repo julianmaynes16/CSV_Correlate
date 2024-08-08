@@ -13,7 +13,7 @@ import cv2
 import time
 
 
-class VideoThread(QRunnable):
+class VideoThread(QThread):
     change_pixmap_signal = Signal(QPixmap)
 
     def __init__(self, video_file, input_frame, seconds_before_loop):

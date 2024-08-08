@@ -11,6 +11,7 @@ import sys
 import cv2
 import time
 import matplotlib.pyplot as plt
+from graphProcessing import *
 from videoProcessing import *
 from ballWidget import *
 
@@ -471,6 +472,9 @@ def openWindow(input_frame, seconds_before_loop):
             self.video_thread.change_pixmap_signal.connect(self.move_crosshair)
             self.video_thread.start()
 
+
+            self.graphic_thread = GraphThread(force_time, force_height, input_frame, seconds_before_loop)
+            
             
         #def closeEvent(self,event):
         #    self.thread.stop()

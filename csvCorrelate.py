@@ -13,6 +13,7 @@ import time
 import matplotlib.pyplot as plt
 from videoProcessing import *
 from ballWidget import *
+from bisect import bisect_left
 
 
 force_file = None 
@@ -285,10 +286,16 @@ def appendLegColumn(mocap_time, step_list):
         writer = csv.writer(write_file)
         writer.writerows(data)
 
+
+
 def barXToY(bar_x):
-    for i in range(len(force_time)):
-        if force_time[i] >= bar_x:
-            return force_height[i]
+    #print(bisect_left(force_time, bar_x))
+    return (bisect_left(force_time, bar_x))
+    #for i in range(len(force_time)):
+    #    if force_time[i] >= bar_x:
+    #        print(i)
+    #        return force_height[i]
+        
         
 def inputFrameToGraphXFrame(data_type, input_frame):
     
@@ -465,7 +472,6 @@ def openWindow(input_frame, seconds_before_loop):
             cursor_pen = pg.mkPen(color = (255,0,0), width = 1)
             moving_pen = pg.mkPen(color = (255, 165, 0), width = 1)
             self.graphWidget.plot(force_time, force_height, pen=pen)
-
             #crosshair lines
             self.crosshair_v = pg.InfiniteLine(angle=90, movable=False, pen=moving_pen)
             self.graphWidget.addItem(self.crosshair_v, ignoreBounds=True)

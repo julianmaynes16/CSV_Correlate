@@ -286,28 +286,7 @@ def appendLegColumn(mocap_time, step_list):
         writer = csv.writer(write_file)
         writer.writerows(data)
 
-def barXToY(bar_x):
-    for i in range(len(force_time)):
-        if force_time[i] >= bar_x:
-            return force_height[i]
-        
-def inputFrameToGraphXFrame(data_type, input_frame):
-    
-    # turn frame 3000 into an x coordinate
 
-    # we know the first x by the first index of time
-    # The camera fps should be calculated
-    # The Video is 30 frames
-    # So we need to get a starting value
-    video_fps = 30
-    if(data_type == "mocap"):
-        data_fps = 120
-        graph_x_start = mocap_time[0]
-    elif(data_type == "force"):
-        data_fps = 1000
-        graph_x_start = force_time[0]
-        #should be like 442.19
-    return(int(((1/video_fps) * input_frame) * data_fps)) # returns the frame where the input frame
     
     
 
@@ -448,34 +427,39 @@ def openWindow(input_frame, seconds_before_loop):
             self.setMinimumSize(QSize(800,700))
             
         # Ball widget
-            self.ballWidget = BallWidget()
+            #self.ballWidget = BallWidget()
 
         # Video
             self.label = QLabel(self)
 
-        #Lay the ball widget to the right of the video
-            layout_h = QHBoxLayout()
-            layout_h.addWidget(self.label)
-            layout_h.addWidget(self.ballWidget)
-        # Lay the graph under everything
-            layout_v = QVBoxLayout()
-            layout_v.addLayout(layout_h)
-            layout_v.addWidget(self.graphWidget)
-            
-        #Center everything
-            central_widget = QWidget()
-            central_widget.setLayout(layout_v)
-            self.setCentralWidget(central_widget)
         # Establish video thread
             self.video_thread = VideoThread(video_file, input_frame, seconds_before_loop)
             self.video_thread.change_pixmap_signal.connect(self.update_image)
-            self.video_thread.change_pixmap_signal.connect(self.move_crosshair)
+            #self.video_thread.change_pixmap_signal.connect(self.move_crosshair)
             self.video_thread.start()
 
 
             self.graphic_thread = GraphThread(force_time, force_height, input_frame, seconds_before_loop)
             
+            self.graphic_thread.start()
+
+        #Lay the ball widget to the right of the video
+            layout_h = QHBoxLayout()
+            layout_h.addWidget(self.label)
+            #layout_h.addWidget(self.ballWidget)
+        # Lay the graph under everything
+            layout_v = QVBoxLayout()
+            layout_v.addLayout(layout_h)
+            layout_v.addWidget(self.graphic_thread.graphWidget)
             
+        #Center everything
+            central_widget = QWidget()
+            central_widget.setLayout(layout_v)
+            self.setCentralWidget(central_widget)
+
+
+        def update_image(self,pixmap): 
+            self.label.setPixmap(pixmap.scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         #def closeEvent(self,event):
         #    self.thread.stop()
         #    event.accept()

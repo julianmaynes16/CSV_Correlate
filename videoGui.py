@@ -23,6 +23,7 @@ class videoGui():
         self.video_fps = video_fps
         self.input_frame = input_frame
         self.seconds_before_loop = seconds_before_loop
+        self.data_fps = self.csv_process.truncated_fps
 
         video_file_list = os.listdir(os.path.join(os.getcwd(), 'video'))
         for file in video_file_list: 
@@ -46,22 +47,7 @@ class videoGui():
             data_fps = 1000
             graph_x_start = self.csv_process.force_time[0]
             #should be like 442.19
-        return(int(((1/self.video_fps) * input_frame) * data_fps)) # returns the frame where the input frame
-    
-    
-
-
-
-#def csvAlter(show_plot = True):
-#    fileStatus()
-#    findStartForce()
-#    print(force_start)
-#    mocap_start = findStartMocap()
-#    print(mocap_start)
-#    verifyPlot(force_start, mocap_start, show_plot)
-
-
-    
+        return(int(((1/self.video_fps) * input_frame) * data_fps)) # returns the frame where the input frame    
 
 # Write something that gives you an array of times that the leg has moved, SAVE THE TIMES SOMEWHERE (json maybe) (want video offset, file names of all files connected, list of all starting step times in each csv) press for next step (start of steptimes), go to step 100. use a video player that reads frames like open cv 
     def playVideo(self):
@@ -76,26 +62,16 @@ class videoGui():
         print(f"fps: {frame_rate}")
         while(cap.isOpened()):
             # Capture frame-by-frame
-            #read_time_begin = time.time()
             ret, frame = cap.read()
 
-            #print(thirty_fps_diff)
             while (time.time() - last_imshow_time)< (1/frame_rate):
                 pass
-            #read_time_end = time.time()
-            #read_diff = read_time_begin-read_time_end
-            #print(f"Read time difference: {read_diff}")
-            #print(f"Video frame: {video_frame}")
             
             video_frame+=1
             if ret == True:
                 # Display the resulting frame
-                #show_time_begin = time.time()
                 last_imshow_time = time.time()
                 cv2.imshow('Frame', frame)
-                #show_time_end = time.time()
-                #show_diff = show_time_begin - show_time_end
-                #print(f"Show time difference: {show_diff}")
                 # Press Q on keyboard to exit
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
@@ -169,6 +145,8 @@ class videoGui():
 
             self.thirty_fps_begin_linemove = time.time()
             self.loop_time = time.time()
+        #Line moving 
+            self.line_move_index = 0
 
             #Main setup
             #self.setStyleSheet("background-color: white;")
@@ -190,12 +168,12 @@ class videoGui():
             self.graphWidget.showGrid(x=True, y=True)
 
             pen = pg.mkPen(color=(255, 255, 255), width = 3)
-            cursor_pen = pg.mkPen(color = (255,0,0), width = 1)
+            cursor_pen = pg.mkPen(color = (255,0,0), width = 2)
             moving_pen = pg.mkPen(color = (255, 165, 0), width = 1)
             self.graphWidget.plot(self.csv_process.force_time, self.csv_process.force_height, pen=pen)
         #crosshair lines
-            #self.crosshair_v = pg.InfiniteLine(angle=90, movable=False, pen=moving_pen)
-            #self.graphWidget.addItem(self.crosshair_v, ignoreBounds=True)
+            self.crosshair_v = pg.InfiniteLine(angle=90, movable=False, pen=moving_pen)
+            self.graphWidget.addItem(self.crosshair_v, ignoreBounds=True)
             self.crosshair_cursor = pg.InfiniteLine(pos = 500, angle=90, movable=True, pen=cursor_pen)
             
             self.graphWidget.addItem(self.crosshair_cursor, ignoreBounds=True)
@@ -235,7 +213,7 @@ class videoGui():
 
             self.thread = VideoThread(self.video_gui.video_file, self.video_gui.input_frame, self.video_gui.seconds_before_loop)
             self.thread.change_pixmap_signal.connect(self.update_image)
-            #self.thread.change_pixmap_signal.connect(self.move_crosshair)
+            self.thread.change_pixmap_signal.connect(self.move_crosshair)
             self.thread.start()
             print("Finished Initialization.")
 
@@ -243,27 +221,25 @@ class videoGui():
             self.label.setPixmap(pixmap.scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation))
             
             
-        def move_crosshair(self, e):
-            line_move_index = 1
-            if(time.time() - self.thirty_fps_begin_linemove) > (1/30):
-                self.thirty_fps_begin_linemove = time.time()
-                line_move_index = (1/30)
-                if ((time.time() - self.loop_time) > self.video_gui.seconds_before_loop):
-                    self.loop_time = time.time()
-                    #Set crosshair back to where the input_frame is
-                    self.crosshair_v.setPos(self.csv_process.force_time[self.csv_process.inputFrameToGraphXFrame("force", self.video_gui.input_frame)])
-                self.crosshair_v.setPos(self.crosshair_v.x() + line_move_index)
-                self.ballWidget.update_ball_position(self.csv_process.barXToY(self.crosshair_v.x()))
-                line_move_index += (1/30)
-
-        def update_crosshair(self, e):
-            pos = e[0]
-            if self.graphWidget.sceneBoundingRect().contains(pos):
-                mousePoint = self.graphWidget.getPlotItem().vb.mapSceneToView(pos)
-                self.crosshair_cursor.setPos(mousePoint.x())
-                self.crosshair_v.setPos(mousePoint.x())
+        def move_crosshair(self):
+        #If the line has moved past the max gif time, reset it back to the cursos line
+            #print(self.crosshair_v.x())
+            if(self.line_move_index > self.video_gui.seconds_before_loop):
+                self.crosshair_v.setPos(self.crosshair_cursor.x())
+                self.line_move_index = 0
+                #self.line_move_index = (1/self.data_fps)
+        # Move the orange line and make it move one more frame next time
+            self.crosshair_v.setPos(self.crosshair_cursor.x() + self.line_move_index)
+            self.line_move_index += (1/self.video_gui.video_fps)
+        # Update the ball location
+            self.ballWidget.update_ball_position(self.csv_process.barXToY(self.crosshair_v.x()))
             
-
+        #If the line hasn't reached the end yet
+            #if((time.time() - self.loop_time) > self.video_gui.seconds_before_loop):
+            # Update the time
+            #    self.loop_time = time.time()
+            #Set crosshair back to where the input_frame is
+            #    self.crosshair_v.setPos(self.csv_process.force_time[self.video_gui.inputFrameToGraphXFrame("force", self.video_gui.input_frame)])
         
         def closeEvent(self,event):
             self.thread.stop()

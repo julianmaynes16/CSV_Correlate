@@ -135,6 +135,7 @@ class csvProcess():
     
     def returnTruncatedData(self, input_height, input_time, datatype = "force", framerate = 60):
         print("Truncating data...")
+        self.truncated_fps = framerate
         array_iterator = 0
         data_iterator = 0
         return_height = []

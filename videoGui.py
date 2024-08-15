@@ -134,12 +134,16 @@ class videoGui():
         cv2.destroyAllWindows()
 
     class mainWindow(QMainWindow):
+        pause_video_send = Signal()
+        resume_video_send = Signal()
         def __init__(self, csv_process, video_gui):
             super().__init__()
             print("Initializing Window...")
         #Setup csv and video objects
             self.csv_process = csv_process
             self.video_gui = video_gui
+
+            self.pause_pressed = False
         # Truncate input values
             self.csv_process.returnTruncatedData(self.csv_process.force_height, self.csv_process.force_time, datatype = "force", framerate = 60)
 
@@ -153,17 +157,17 @@ class videoGui():
             self.setWindowTitle("RoboCorrelate")
             self.setMinimumSize(QSize(800,700))
             
-        #Plot
-            
+            #Plot
             self.graphWidget = pg.PlotWidget()
-        #Set background to white
+            #Set background to white
             self.graphWidget.setBackground('#1E1E1E')
-        #Set title
+            #Set title
             self.graphWidget.setTitle("Low-Level Data ", color="w", size="15pt")
-        #Set axis labels
+            #Set axis labels
             styles = {"color": "#fff", "font-size": "15px"}
             self.graphWidget.setLabel("left", "Leg Height (mm)", **styles)
             self.graphWidget.setLabel("bottom", "Time (s)", **styles)
+
             #Add grid
             self.graphWidget.showGrid(x=True, y=True)
 
@@ -171,49 +175,78 @@ class videoGui():
             cursor_pen = pg.mkPen(color = (255,0,0), width = 2)
             moving_pen = pg.mkPen(color = (255, 165, 0), width = 1)
             self.graphWidget.plot(self.csv_process.force_time, self.csv_process.force_height, pen=pen)
-        #crosshair lines
+
+            #crosshair lines
             self.crosshair_v = pg.InfiniteLine(angle=90, movable=False, pen=moving_pen)
             self.graphWidget.addItem(self.crosshair_v, ignoreBounds=True)
             self.crosshair_cursor = pg.InfiniteLine(pos = 500, angle=90, movable=True, pen=cursor_pen)
             self.graphWidget.setMouseEnabled(y=False)
             self.graphWidget.addItem(self.crosshair_cursor, ignoreBounds=True)
-            
-            
 
-            #self.proxy = pg.SignalProxy(self.graphWidget.scene().sigMouseMoved, rateLimit=30, slot=self.update_crosshair)
-        #Resize graph
+            #Start video thread
+            self.thread = VideoThread(self.video_gui.video_file, self.video_gui.input_frame, self.video_gui.seconds_before_loop, playback_rate = 15)
+            self.thread.change_pixmap_signal.connect(self.update_image)
+            self.thread.change_pixmap_signal.connect(self.move_crosshair)
+            self.thread.start()
+
+            #Resize graph
             self.graphWidget.setFixedSize(600, 400)  # Adjust the size as needed
             self.graphWidget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
             
-        #ball widget
+            #Ball Widget Initialization
             self.ballWidget = BallWidget()
-
+            #Video initialization
             self.label = QLabel(self)
-        #video Control toolbar
+            #video Control toolbar initialization
             self.video_toolbar = QToolBar()
-            style = self.style()
-            pause_icon = QIcon.fromTheme(QIcon.ThemeIcon.MediaPlaybackPause, style.standardIcon(QStyle.SP_MediaPause))
-            self._pause_action = self.video_toolbar.addAction(pause_icon, "Pause")
-            link_icon = QIcon.fromTheme(QIcon.ThemeIcon.InsertLink)
-            self._link_action = self.video_toolbar.addAction(link_icon, "Link")
-
-        # Video Slider
+            # Video Slider setup
             #make a box under it for the orange line path
             self.video_slider = QSlider(Qt.Horizontal)
-        #layout
+            self.video_slider.setMinimum(0.0)
+            self.video_slider.setMaximum(round(self.thread.cap.get(cv2.CAP_PROP_FRAME_COUNT) / self.thread.cap.get(cv2.CAP_PROP_FPS)))
+            self.video_slider.valueChanged.connect(self.updateVideoFrame)
+
+            style = self.style()
+            #Pause button setup
+            self.pause_icon = QIcon.fromTheme(QIcon.ThemeIcon.MediaPlaybackPause)
+            self._pause_action = self.video_toolbar.addAction(self.pause_icon, "Pause")
+            self._pause_action.setCheckable(True)
+
+            # Make button background stay transparent
+            tool_button = self.video_toolbar.widgetForAction(self._pause_action)
+            tool_button.setStyleSheet("""
+                QToolButton {
+                    background-color: transparent;
+                    border: none;
+                }
+                QToolButton:checked {
+                    background-color: transparent;
+                }
+                QToolButton:pressed {
+                    background-color: transparent;
+                }
+            """)
+
+            self._pause_action.triggered.connect(self.toggle_pause)
+            #Link button setup
+            link_icon = QIcon.fromTheme(QIcon.ThemeIcon.InsertLink)
+            self._link_action = self.video_toolbar.addAction(link_icon, "Link")
+            self._link_action.triggered.connect(self.link)
+
+            #layout
             #controls
             control_layout = QHBoxLayout()
             control_layout.addWidget(self.video_slider)
             control_layout.addWidget(self.video_toolbar)
-            
+            #Add video and controls
             video_controls = QVBoxLayout()
             video_controls.addWidget(self.label)
             video_controls.addLayout(control_layout)
-
+            #Add ball
             video_ball = QHBoxLayout()
             video_ball.addLayout(video_controls)
             video_ball.addWidget(self.ballWidget)
-
+            #Add graph
             layout_v = QVBoxLayout()
             layout_v.addLayout(video_ball)
             layout_v.addWidget(self.graphWidget)
@@ -222,24 +255,56 @@ class videoGui():
             central_widget = QWidget()
             central_widget.setLayout(layout_v)
             self.setCentralWidget(central_widget)
+            
 
-            self.thread = VideoThread(self.video_gui.video_file, self.video_gui.input_frame, self.video_gui.seconds_before_loop, playback_rate = 15)
-            self.thread.change_pixmap_signal.connect(self.update_image)
-            self.thread.change_pixmap_signal.connect(self.move_crosshair)
-            self.thread.start()
+            self.pause_video_send.connect(self.thread.pause_video_received)
+            self.resume_video_send.connect(self.thread.resume_video_received)
+            #self.link
+
             print("Finished Initialization.")
 
         def update_image(self, gif_state): 
-            #print(time.time())
-            self.label.setPixmap(gif_state.pixmap.scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            if(not self.pause_pressed):
+                self.label.setPixmap(gif_state.pixmap.scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation))
             
             
         # Line goes for 7 seconds whent the video goes for 5. If the data is at 60 fps(0, 0.016,...)
         def move_crosshair(self, gif_state):
-            # Move crosshair
-            self.crosshair_v.setPos(self.crosshair_cursor.x() + gif_state.time)
-            # Update Ball Position
-            self.ballWidget.update_ball_position(self.csv_process.barXToY(self.crosshair_v.x()))
+            if(not self.pause_pressed):
+                # Move crosshair
+                self.crosshair_v.setPos(self.crosshair_cursor.x() + gif_state.time)
+
+                # Update Ball Position
+                self.ballWidget.update_ball_position(self.csv_process.barXToY(self.crosshair_v.x()))
+        def pause(self):
+            self.pause_pressed = True
+            self._pause_action.setIcon(QIcon.fromTheme(QIcon.ThemeIcon.MediaPlaybackStart))
+            self._pause_action.setText("Play")
+            self.pause_video_send.emit()
+            
+        def resume(self):
+            if self.pause_pressed:
+                self.pause_pressed = False
+                self._pause_action.setIcon(QIcon.fromTheme(QIcon.ThemeIcon.MediaPlaybackPause))
+                self._pause_action.setText("Pause")
+                self.resume_video_send.emit()
+                
+            
+        def toggle_pause(self):
+            if self._pause_action.isChecked():
+                self.pause()
+            else:
+                self.resume()
+
+        def link(self):
+            #self._link_action.setIcon(QIcon.fromTheme(QIcon.ThemeIcon.)
+            print("Link")
+            
+        def updateVideoFrame(self):
+            print(self.video_slider.value())
+
+
+
     
         def closeEvent(self,event):
             self.thread.stop()

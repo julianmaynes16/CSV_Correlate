@@ -21,6 +21,8 @@ class GifState():
 
 class VideoThread(QThread):
     change_pixmap_signal = Signal(GifState)
+    pause_video_received = Signal()
+    resume_video_received = Signal()
 
     def __init__(self, video_file, input_frame, seconds_before_loop, playback_rate = 30):
         super().__init__()
@@ -31,10 +33,21 @@ class VideoThread(QThread):
         self.playback_rate = playback_rate
         self.seconds_before_loop = seconds_before_loop
         self.thirtyfps_begin = time.time()
+        self.pause_pressed = False
+
+    def pause_video_received(self):
+        self.pause_pressed = True
+
+    def resume_video_received(self):
+        self.pause_pressed = False
 
     def run(self):
         while self._run_flag:
+            if(self.pause_pressed):
+                continue
+                
             #fps
+            
             if(time.time() - self.thirtyfps_begin) < (1.0/self.playback_rate):
                 continue
             

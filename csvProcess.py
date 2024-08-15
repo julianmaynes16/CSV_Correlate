@@ -304,5 +304,5 @@ class csvProcess():
 
 
     def barXToY(self, bar_x):
-        return (bisect_left(self.force_time, bar_x))
+        return (self.force_height[bisect_left(self.force_time, bar_x)])
          

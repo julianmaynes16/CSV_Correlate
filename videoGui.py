@@ -175,7 +175,7 @@ class videoGui():
             self.crosshair_v = pg.InfiniteLine(angle=90, movable=False, pen=moving_pen)
             self.graphWidget.addItem(self.crosshair_v, ignoreBounds=True)
             self.crosshair_cursor = pg.InfiniteLine(pos = 500, angle=90, movable=True, pen=cursor_pen)
-            
+            self.graphWidget.setMouseEnabled(y=False)
             self.graphWidget.addItem(self.crosshair_cursor, ignoreBounds=True)
             
             
@@ -189,13 +189,33 @@ class videoGui():
             self.ballWidget = BallWidget()
 
             self.label = QLabel(self)
+        #video Control toolbar
+            self.video_toolbar = QToolBar()
+            style = self.style()
+            pause_icon = QIcon.fromTheme(QIcon.ThemeIcon.MediaPlaybackPause, style.standardIcon(QStyle.SP_MediaPause))
+            self._pause_action = self.video_toolbar.addAction(pause_icon, "Pause")
+            link_icon = QIcon.fromTheme(QIcon.ThemeIcon.InsertLink)
+            self._link_action = self.video_toolbar.addAction(link_icon, "Link")
+
+        # Video Slider
+            #make a box under it for the orange line path
+            self.video_slider = QSlider(Qt.Horizontal)
         #layout
-            layout_h = QHBoxLayout()
-            layout_h.addWidget(self.label)
-            layout_h.addWidget(self.ballWidget)
+            #controls
+            control_layout = QHBoxLayout()
+            control_layout.addWidget(self.video_slider)
+            control_layout.addWidget(self.video_toolbar)
+            
+            video_controls = QVBoxLayout()
+            video_controls.addWidget(self.label)
+            video_controls.addLayout(control_layout)
+
+            video_ball = QHBoxLayout()
+            video_ball.addLayout(video_controls)
+            video_ball.addWidget(self.ballWidget)
 
             layout_v = QVBoxLayout()
-            layout_v.addLayout(layout_h)
+            layout_v.addLayout(video_ball)
             layout_v.addWidget(self.graphWidget)
             
 

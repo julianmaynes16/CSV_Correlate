@@ -11,7 +11,7 @@ import sys
 import cv2
 import time
 import matplotlib.pyplot as plt
-from videoProcessing import *
+from videoThread import *
 from ballWidget import *
 from bisect import bisect_left
 

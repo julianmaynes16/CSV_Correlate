@@ -11,7 +11,7 @@ import sys
 import cv2
 import time
 import matplotlib.pyplot as plt
-from videoProcessing import *
+from videoThread import *
 from ballWidget import *
 from csvProcess import *
 from bisect import bisect_left
@@ -202,45 +202,25 @@ class videoGui():
             central_widget = QWidget()
             central_widget.setLayout(layout_v)
             self.setCentralWidget(central_widget)
-            #layout_v = QVBoxLayout()
-            #layout_v.addWidget(self.label, alignment= Qt.AlignTop | Qt.AlignLeft)
-            #layout_v.addWidget(self.graphWidget)
-            #layout_v.addWidget(self.ballWidget)
 
-            #central_widget = QWidget()
-            #central_widget.setLayout(layout)
-            #self.setCentralWidget(central_widget)
-
-            self.thread = VideoThread(self.video_gui.video_file, self.video_gui.input_frame, self.video_gui.seconds_before_loop)
+            self.thread = VideoThread(self.video_gui.video_file, self.video_gui.input_frame, self.video_gui.seconds_before_loop, playback_rate = 15)
             self.thread.change_pixmap_signal.connect(self.update_image)
             self.thread.change_pixmap_signal.connect(self.move_crosshair)
             self.thread.start()
             print("Finished Initialization.")
 
-        def update_image(self,pixmap): 
-            self.label.setPixmap(pixmap.scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        def update_image(self, gif_state): 
+            #print(time.time())
+            self.label.setPixmap(gif_state.pixmap.scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation))
             
             
-        def move_crosshair(self):
-        #If the line has moved past the max gif time, reset it back to the cursos line
-            #print(self.crosshair_v.x())
-            if(self.line_move_index > self.video_gui.seconds_before_loop):
-                self.crosshair_v.setPos(self.crosshair_cursor.x())
-                self.line_move_index = 0
-                #self.line_move_index = (1/self.data_fps)
-        # Move the orange line and make it move one more frame next time
-            self.crosshair_v.setPos(self.crosshair_cursor.x() + self.line_move_index)
-            self.line_move_index += (1/self.video_gui.video_fps)
-        # Update the ball location
+        # Line goes for 7 seconds whent the video goes for 5. If the data is at 60 fps(0, 0.016,...)
+        def move_crosshair(self, gif_state):
+            # Move crosshair
+            self.crosshair_v.setPos(self.crosshair_cursor.x() + gif_state.time)
+            # Update Ball Position
             self.ballWidget.update_ball_position(self.csv_process.barXToY(self.crosshair_v.x()))
-            
-        #If the line hasn't reached the end yet
-            #if((time.time() - self.loop_time) > self.video_gui.seconds_before_loop):
-            # Update the time
-            #    self.loop_time = time.time()
-            #Set crosshair back to where the input_frame is
-            #    self.crosshair_v.setPos(self.csv_process.force_time[self.video_gui.inputFrameToGraphXFrame("force", self.video_gui.input_frame)])
-        
+    
         def closeEvent(self,event):
             self.thread.stop()
             event.accept()

@@ -24,6 +24,15 @@ class BallWidget(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
+        #draw border
+        
+        border_thickness = 1
+        painter.setPen(QPen(Qt.white, 2))
+        painter.drawLine(0,2,0,250)
+        painter.drawLine(0,250,375,250)
+        painter.drawLine(375,250,375,2)
+        painter.drawLine(375,2,0,2)
+
         painter.setPen(Qt.NoPen)
         painter.setBrush(QBrush(QColor(255, 0, 0)))  # Red color
         painter.drawEllipse(self.ball_x - self.ball_radius, self.ball_y - self.ball_radius, self.ball_radius * 2, self.ball_radius * 2)

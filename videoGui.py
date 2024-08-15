@@ -155,7 +155,7 @@ class videoGui():
             #Main setup
             #self.setStyleSheet("background-color: white;")
             self.setWindowTitle("RoboCorrelate")
-            self.setMinimumSize(QSize(800,700))
+            self.setMinimumSize(QSize(830,700))
             
             #Plot
             self.graphWidget = pg.PlotWidget()
@@ -183,6 +183,9 @@ class videoGui():
             self.crosshair_cursor.sigDragged.connect(self.redlineVideoMove)
             self.graphWidget.setMouseEnabled(y=False)
             self.graphWidget.addItem(self.crosshair_cursor, ignoreBounds=True)
+            
+            #self.setLineWidth(1)
+
 
             #Start video thread
             self.thread = VideoThread(self.video_gui.video_file, self.video_gui.input_frame, self.video_gui.seconds_before_loop, playback_rate = 15)
@@ -196,6 +199,7 @@ class videoGui():
             
             #Ball Widget Initialization
             self.ballWidget = BallWidget()
+            #self.ballWidget.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
             #Video initialization
             self.label = QLabel(self)
             #video Control toolbar initialization
@@ -215,8 +219,8 @@ class videoGui():
             self._pause_action.setCheckable(True)
 
             # Make button background stay transparent
-            tool_button = self.video_toolbar.widgetForAction(self._pause_action)
-            tool_button.setStyleSheet("""
+            pause_tool_button = self.video_toolbar.widgetForAction(self._pause_action)
+            pause_tool_button.setStyleSheet("""
                 QToolButton {
                     background-color: transparent;
                     border: none;
@@ -235,6 +239,28 @@ class videoGui():
             self._link_action = self.video_toolbar.addAction(link_icon, "Link")
             self._link_action.triggered.connect(self.link)
             self.link_pressed = False
+            link_tool_button = self.video_toolbar.widgetForAction(self._link_action)
+            link_tool_button.setStyleSheet("""
+                QToolButton {
+                    background-color: transparent;
+                    border: none;
+                }
+                QToolButton:checked {
+                    background-color: transparent;
+                }
+                QToolButton:pressed {
+                    background-color: transparent;
+                }
+            """)
+
+            # Global message box
+            self.messagebox = QLineEdit(self)
+            self.messagebox.setReadOnly(True)
+            self.messagebox.setMinimumHeight(75)
+            self.messagebox.setFocusPolicy(Qt.NoFocus)
+            self.messagebox.setFont(QFont('Comic Sans MS', 25))
+            self.messagebox.setText("Match the video progress bar with the red line")
+
 
             #layout
             #controls
@@ -249,14 +275,19 @@ class videoGui():
             video_ball = QHBoxLayout()
             video_ball.addLayout(video_controls)
             video_ball.addWidget(self.ballWidget)
-            #Add graph
-            layout_v = QVBoxLayout()
-            layout_v.addLayout(video_ball)
-            layout_v.addWidget(self.graphWidget)
+            #Add Message Bar
+            message_video_ball = QVBoxLayout()
+            message_video_ball.addWidget(self.messagebox)
+            message_video_ball.addLayout(video_ball)
+            #message_video_ball.addWidget(self.graphWidget)
+            #Add Graph
+            message_video_ball_graph = QVBoxLayout()
+            message_video_ball_graph.addLayout(message_video_ball)
+            message_video_ball_graph.addWidget(self.graphWidget)
             
 
             central_widget = QWidget()
-            central_widget.setLayout(layout_v)
+            central_widget.setLayout(message_video_ball_graph)
             self.setCentralWidget(central_widget)
             
 
@@ -311,7 +342,7 @@ class videoGui():
            self.linked_data_time = self.crosshair_cursor.x()
            self.linked_cursor_pos = self.video_slider.value()
            self.link_pressed = True
-           print("Data Synced.")
+           self.messagebox.setText(f"Synced. Time difference = {round((self.linked_data_time - self.linked_cursor_pos), 2)} seconds")
             
         def updateVideoFrame(self):
             #print(self.video_slider.value())

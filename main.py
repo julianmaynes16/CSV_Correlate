@@ -10,8 +10,8 @@ def main():
     csv_process = csvProcess(leg_number = 0, data_frequency = 1, truncated_fps = 60, show_plot = False)
     csv_process.copyForceForces()
     csv_process.copyForceTime()
-
-    video_gui = videoGui(csv_process, video_fps = 15, input_frame = 12120, seconds_before_loop = 5)
+    # 12120 is the frame of the breaking
+    video_gui = videoGui(csv_process, video_fps = 15, input_frame = 0, seconds_before_loop = 5)
 
     main_window = video_gui.mainWindow(csv_process, video_gui)
     

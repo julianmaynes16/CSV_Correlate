@@ -180,6 +180,7 @@ class videoGui():
             self.crosshair_v = pg.InfiniteLine(angle=90, movable=False, pen=moving_pen)
             self.graphWidget.addItem(self.crosshair_v, ignoreBounds=True)
             self.crosshair_cursor = pg.InfiniteLine(pos = 500, angle=90, movable=True, pen=cursor_pen)
+            self.crosshair_cursor.sigDragged.connect(self.redlineVideoMove)
             self.graphWidget.setMouseEnabled(y=False)
             self.graphWidget.addItem(self.crosshair_cursor, ignoreBounds=True)
 
@@ -205,6 +206,7 @@ class videoGui():
             self.video_slider.setMinimum(0.0)
             self.video_slider.setMaximum(round(self.thread.cap.get(cv2.CAP_PROP_FRAME_COUNT) / self.thread.cap.get(cv2.CAP_PROP_FPS)))
             self.video_slider.valueChanged.connect(self.updateVideoFrame)
+
 
             style = self.style()
             #Pause button setup
@@ -232,6 +234,7 @@ class videoGui():
             link_icon = QIcon.fromTheme(QIcon.ThemeIcon.InsertLink)
             self._link_action = self.video_toolbar.addAction(link_icon, "Link")
             self._link_action.triggered.connect(self.link)
+            self.link_pressed = False
 
             #layout
             #controls
@@ -276,6 +279,13 @@ class videoGui():
 
                 # Update Ball Position
                 self.ballWidget.update_ball_position(self.csv_process.barXToY(self.crosshair_v.x()))
+        def redlineVideoMove(self):
+            #update the video and slider
+            if(self.link_pressed):
+                redline_time_diff = self.crosshair_cursor.x() - self.linked_data_time
+                self.video_slider.setValue(self.linked_cursor_pos + redline_time_diff)
+                self.updateVideoFrame()
+
         def pause(self):
             self.pause_pressed = True
             self._pause_action.setIcon(QIcon.fromTheme(QIcon.ThemeIcon.MediaPlaybackStart))
@@ -297,12 +307,16 @@ class videoGui():
                 self.resume()
 
         def link(self):
-            #self._link_action.setIcon(QIcon.fromTheme(QIcon.ThemeIcon.)
-            print("Link")
+            # Linked data time is the data time that matches the video time
+           self.linked_data_time = self.crosshair_cursor.x()
+           self.linked_cursor_pos = self.video_slider.value()
+           self.link_pressed = True
+           print("Data Synced.")
             
         def updateVideoFrame(self):
-            print(self.video_slider.value())
-
+            #print(self.video_slider.value())
+            self.thread.input_frame = (round(self.video_slider.value() * self.thread.cap.get(cv2.CAP_PROP_FPS)))
+            #self.thread.cap.set(cv2.CAP_PROP_POS_FRAMES, self.thread.input_frame)
 
 
     

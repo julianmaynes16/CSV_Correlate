@@ -136,6 +136,7 @@ class videoGui():
     class mainWindow(QMainWindow):
         pause_video_send = Signal()
         resume_video_send = Signal()
+        reset_gif_send = Signal()
         def __init__(self, csv_process, video_gui):
             super().__init__()
             print("Initializing Window...")
@@ -155,7 +156,7 @@ class videoGui():
             #Main setup
             #self.setStyleSheet("background-color: white;")
             self.setWindowTitle("RoboCorrelate")
-            self.setMinimumSize(QSize(830,700))
+            self.setMinimumSize(QSize(400,300))
             
             #Plot
             self.graphWidget = pg.PlotWidget()
@@ -194,11 +195,13 @@ class videoGui():
             self.thread.start()
 
             #Resize graph
-            self.graphWidget.setFixedSize(600, 400)  # Adjust the size as needed
-            self.graphWidget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+            #self.graphWidget.setFixedSize(700, 400)  # Adjust the size as needed
+            #self.graphWidget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
             
             #Ball Widget Initialization
-            self.ballWidget = BallWidget()
+            self.ballWidget = BallWidget(self.width(), self.height())
+            #self.ballWidget.resize(self.height() * (1.0/2) * (16.0/9) * (1.0/4) * (1/2), self.height() * (1.0/2))
+            self.ballWidget.resize(10 ,400) 
             #self.ballWidget.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
             #Video initialization
             self.label = QLabel(self)
@@ -209,8 +212,9 @@ class videoGui():
             self.video_slider = QSlider(Qt.Horizontal)
             self.video_slider.setMinimum(0.0)
             self.video_slider.setMaximum(round(self.thread.cap.get(cv2.CAP_PROP_FRAME_COUNT) / self.thread.cap.get(cv2.CAP_PROP_FPS)))
+            #Disable arrow keys controlling slider
+            self.video_slider.setFocusPolicy(Qt.NoFocus)
             self.video_slider.valueChanged.connect(self.updateVideoFrame)
-
 
             style = self.style()
             #Pause button setup
@@ -220,6 +224,7 @@ class videoGui():
 
             # Make button background stay transparent
             pause_tool_button = self.video_toolbar.widgetForAction(self._pause_action)
+            self._pause_action.triggered.connect(self.toggle_pause)
             pause_tool_button.setStyleSheet("""
                 QToolButton {
                     background-color: transparent;
@@ -233,14 +238,32 @@ class videoGui():
                 }
             """)
 
-            self._pause_action.triggered.connect(self.toggle_pause)
+            
             #Link button setup
             link_icon = QIcon.fromTheme(QIcon.ThemeIcon.InsertLink)
             self._link_action = self.video_toolbar.addAction(link_icon, "Link")
-            self._link_action.triggered.connect(self.link)
+            self._link_action.triggered.connect(self.toggle_link)
+            self._link_action.setCheckable(True)
             self.link_pressed = False
-            link_tool_button = self.video_toolbar.widgetForAction(self._link_action)
-            link_tool_button.setStyleSheet("""
+            self.link_tool_button = self.video_toolbar.widgetForAction(self._link_action)
+            self.link_tool_button.setStyleSheet("""
+                QToolButton {
+                    background-color: transparent;
+                    border: none;
+                }
+                QToolButton:checked {
+                    background-color: lightcoral;
+                }
+                QToolButton:pressed {
+                    background-color: transparent;
+                }
+            """)
+            self.current_step_viewing = 0
+            next_step_icon = QIcon.fromTheme(QIcon.ThemeIcon.GoNext)
+            self._next_step_action = self.video_toolbar.addAction(next_step_icon, "Next Step")
+            self._next_step_action.triggered.connect(self.nextStep)
+            self._next_tool_button = self.video_toolbar.widgetForAction(self._next_step_action)
+            self._next_tool_button.setStyleSheet("""
                 QToolButton {
                     background-color: transparent;
                     border: none;
@@ -253,12 +276,32 @@ class videoGui():
                 }
             """)
 
+            previous_step_icon = QIcon.fromTheme(QIcon.ThemeIcon.GoPrevious)
+            self._previous_step_action = self.video_toolbar.addAction(previous_step_icon, "Previous Step")
+            self._previous_step_action.triggered.connect(self.previousStep)
+            self._previous_tool_button = self.video_toolbar.widgetForAction(self._previous_step_action)
+            self._previous_tool_button.setStyleSheet("""
+                QToolButton {
+                    background-color: transparent;
+                    border: none;
+                }
+                QToolButton:checked {
+                    background-color: transparent;
+                }
+                QToolButton:pressed {
+                    background-color: transparent;
+                }
+            """)
+
+
+
             # Global message box
             self.messagebox = QLineEdit(self)
             self.messagebox.setReadOnly(True)
             self.messagebox.setMinimumHeight(75)
             self.messagebox.setFocusPolicy(Qt.NoFocus)
-            self.messagebox.setFont(QFont('Comic Sans MS', 25))
+            self.messagebox.setFont(QFont('Helvetica Neue', 18))
+            self.messagebox.setAlignment(Qt.AlignCenter)
             self.messagebox.setText("Match the video progress bar with the red line")
 
 
@@ -273,8 +316,10 @@ class videoGui():
             video_controls.addLayout(control_layout)
             #Add ball
             video_ball = QHBoxLayout()
+            video_ball.addStretch()
             video_ball.addLayout(video_controls)
             video_ball.addWidget(self.ballWidget)
+            video_ball.addStretch()
             #Add Message Bar
             message_video_ball = QVBoxLayout()
             message_video_ball.addWidget(self.messagebox)
@@ -293,13 +338,39 @@ class videoGui():
 
             self.pause_video_send.connect(self.thread.pause_video_received)
             self.resume_video_send.connect(self.thread.resume_video_received)
+            self.reset_gif_send.connect(self.thread.reset_gif)
             #self.link
 
             print("Finished Initialization.")
+        # Reduces a video's dimensions when resizing window
+        def getVideoHeightWidth(self, proportion=0.5, window_size=(1080,1920), primary_axis='height', aspect_ratio=16.0/9.0, max_secondary_proportion=0.8):
+            match primary_axis:
+                case 'height':
+                    primary_axis_index = 0
+                    secondary_axis_index = 1
+                case 'width':
+                    primary_axis_index = 1
+                    secondary_axis_index = 0
+                case _:
+                    print('Did not understand axis, defaulting to height')
+                    primary_axis_index = 0
+                    secondary_axis_index = 1
+            output_size = [0,0]
+            # Primary is a proportion of the main window's primary
+            output_size[primary_axis_index] = proportion * (window_size[primary_axis_index])
+            # Secondary is similarly reduced (primary = width)by or increased (primary = height) by aspect ratio
+            output_size[secondary_axis_index] = [aspect_ratio, 1.0/aspect_ratio][primary_axis_index] * output_size[primary_axis_index]
+            # If new secondary is more than secondary prop % of the original secondary window size, resize according to the secondary proportion
+            if output_size[secondary_axis_index] > max_secondary_proportion * window_size[secondary_axis_index]:
+                output_size[secondary_axis_index] = max_secondary_proportion * window_size[secondary_axis_index]
+                output_size[primary_axis_index] = [aspect_ratio,1.0/aspect_ratio][secondary_axis_index] * output_size[secondary_axis_index]
+            return tuple(output_size)
 
         def update_image(self, gif_state): 
             if(not self.pause_pressed):
-                self.label.setPixmap(gif_state.pixmap.scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                #Prev was 800,
+                vid_size = self.getVideoHeightWidth(proportion = 0.8, window_size=(self.height(),self.width()))
+                self.label.setPixmap(gif_state.pixmap.scaled(vid_size[0], vid_size[1], Qt.KeepAspectRatio, Qt.SmoothTransformation))
             
             
         # Line goes for 7 seconds whent the video goes for 5. If the data is at 60 fps(0, 0.016,...)
@@ -310,11 +381,11 @@ class videoGui():
 
                 # Update Ball Position
                 self.ballWidget.update_ball_position(self.csv_process.barXToY(self.crosshair_v.x()))
-        def redlineVideoMove(self):
-            #update the video and slider
+        #update the video and slider
+        def redlineVideoMove(self): 
             if(self.link_pressed):
                 redline_time_diff = self.crosshair_cursor.x() - self.linked_data_time
-                self.video_slider.setValue(self.linked_cursor_pos + redline_time_diff)
+                self.video_slider.setValue(self.linked_video_pos + redline_time_diff)
                 self.updateVideoFrame()
 
         def pause(self):
@@ -329,21 +400,67 @@ class videoGui():
                 self._pause_action.setIcon(QIcon.fromTheme(QIcon.ThemeIcon.MediaPlaybackPause))
                 self._pause_action.setText("Pause")
                 self.resume_video_send.emit()
-                
-            
+
+        def nextStep(self):
+            # 8 steps, max is 7
+            if(self.link_pressed and self.current_step_viewing < len(self.csv_process.step_list) - 1):
+                self.current_step_viewing += 1
+                self.crosshair_cursor.setPos(self.csv_process.step_list[self.current_step_viewing])
+                link_step_diff = self.csv_process.step_list[self.current_step_viewing] - self.linked_data_time # if step is 400 and link is 500 it will be -100
+                self.video_slider.setValue(self.linked_video_pos + link_step_diff)
+                self.updateVideoFrame()
+                self.messagebox.setText(f"Step: {self.current_step_viewing}")
+
+        def previousStep(self):
+            # 8 steps, max is 7
+            if(self.link_pressed and self.current_step_viewing > 0):
+                self.current_step_viewing -= 1
+                self.crosshair_cursor.setPos(self.csv_process.step_list[self.current_step_viewing])
+                link_step_diff = self.csv_process.step_list[self.current_step_viewing] - self.linked_data_time # if step is 400 and link is 500 it will be -100
+                self.video_slider.setValue(self.linked_video_pos + link_step_diff)
+                self.updateVideoFrame()
+                self.messagebox.setText(f"Step: {self.current_step_viewing}")
+
+        
         def toggle_pause(self):
             if self._pause_action.isChecked():
                 self.pause()
             else:
                 self.resume()
 
+        def keyPressEvent(self, event):
+            if(not self.link_pressed):
+                if event.key() == Qt.Key.Key_Left:
+                    if((self.crosshair_cursor.x() - 0.2) >= 0):
+                        self.crosshair_cursor.setPos(self.crosshair_cursor.x() - 0.2)
+                elif event.key() == Qt.Key.Key_Right:
+                    self.crosshair_cursor.setPos(self.crosshair_cursor.x() + 0.2)
+            if event.key() == Qt.Key.Key_R:
+                self.reset_gif_send.emit()
+
+
+        def toggle_link(self):
+            if self._link_action.isChecked():
+                self.link()
+            else:
+                self.unlink()
+
+
+
         def link(self):
             # Linked data time is the data time that matches the video time
            self.linked_data_time = self.crosshair_cursor.x()
-           self.linked_cursor_pos = self.video_slider.value()
+           self.linked_video_pos = self.video_slider.value()
            self.link_pressed = True
-           self.messagebox.setText(f"Synced. Time difference = {round((self.linked_data_time - self.linked_cursor_pos), 2)} seconds")
-            
+           self._link_action.setText("Unlink")
+           self.messagebox.setText(f"Synced. Time difference = {round((self.linked_data_time - self.linked_video_pos), 2)} seconds")
+
+        def unlink(self):
+            self.link_pressed = False
+            self._link_action.setText("Link")
+            self.messagebox.setText(f"Unsynced.")
+
+        # Set Video to a frame
         def updateVideoFrame(self):
             #print(self.video_slider.value())
             self.thread.input_frame = (round(self.video_slider.value() * self.thread.cap.get(cv2.CAP_PROP_FPS)))

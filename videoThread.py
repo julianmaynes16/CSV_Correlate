@@ -35,6 +35,7 @@ class VideoThread(QThread):
         self.seconds_before_loop = seconds_before_loop
         self.thirtyfps_begin = time.time()
         self.pause_pressed = False
+        self.reset_flag = False
 
     def pause_video_received(self):
         self.pause_pressed = True
@@ -42,18 +43,22 @@ class VideoThread(QThread):
     def resume_video_received(self):
         self.pause_pressed = False
 
+    def reset_gif(self):
+        self.reset_flag = True
+
     def run(self):
         while self._run_flag:
             if(self.input_frame != self.latest_input_frame):
+
                 self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.input_frame)
                 #View frame on pause
-                ret, frame = self.cap.read()
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                height, width, channel = frame.shape
-                img = QImage(frame, width, height, QImage.Format_RGB888)
-                pix = QPixmap.fromImage(img)
-                self.change_pixmap_signal.emit(GifState(pix, frames_since_begin / self.cap.get(cv2.CAP_PROP_FPS)))
-                
+                # ret, frame = self.cap.read()
+                # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                # height, width, channel = frame.shape
+                # img = QImage(frame, width, height, QImage.Format_RGB888)
+                # pix = QPixmap.fromImage(img)
+                # self.change_pixmap_signal.emit(GifState(pix, frames_since_begin / self.cap.get(cv2.CAP_PROP_FPS)))
+
             self.latest_input_frame = self.input_frame
             if(self.pause_pressed):
                 continue
@@ -74,10 +79,11 @@ class VideoThread(QThread):
             # How many fames have passed in any given amount of time
             frames_since_begin = (self.cap.get(cv2.CAP_PROP_POS_FRAMES) - self.input_frame)
             # If goes past gif alloted time
-            if (frames_since_begin > frames_before_loop):
+            if ((frames_since_begin > frames_before_loop) or (frames_since_begin < 0) or (self.reset_flag)):
                 self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.input_frame)
                 self.curr_frame = self.input_frame
                 frames_since_begin = 0
+                self.reset_flag = False
             
             ret, frame = self.cap.read()
             if ret:

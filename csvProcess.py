@@ -17,7 +17,7 @@ from bisect import bisect_left
 
 # prints out messages if able to find the files in the folders
 class csvProcess():
-    def __init__(self, leg_number=0, data_frequency = 1, truncated_fps=60, show_plot = True):
+    def __init__(self, leg_number=0, data_frequency = 1, truncated_fps=60, detection_offset = 5,show_plot = True):
         self.leg_number = leg_number
         self.data_frequency = data_frequency
         self.truncated_fps = truncated_fps
@@ -29,6 +29,7 @@ class csvProcess():
         self.step_list = []
         self.force_start_index = 0
         self.mocap_start_index = 0
+        self.detection_offset = detection_offset
 
     # file reference to the low level file and force file. Note: force refers to low level in every instance here
         force_file_list = os.listdir(os.path.join(os.getcwd(), 'force'))
@@ -175,7 +176,7 @@ class csvProcess():
                 # converts each mocap time sample to be the force start time shifted by the offset 
                 self.mocap_time[i] = self.force_time[force_start_index] + time_offset 
 
-    def copyData(self):
+    def copyAllData(self):
         self.copyMocapHeights()
         self.copyForceForces()
         self.copyForceTime()
@@ -254,7 +255,7 @@ class csvProcess():
                     if recent_high > (self.force_height[i] + 120):
                         # Adds time of leg movement to list. 
                         recent_high = self.force_height[i]
-                        self.step_list.append(self.force_time[i])
+                        self.step_list.append(self.force_time[i] - self.detection_offset)
 
 
 # writes new times to the csv in mocap

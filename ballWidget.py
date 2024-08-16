@@ -7,20 +7,20 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 class BallWidget(QWidget):
-    def __init__(self):
+    def __init__(self, width, height):
         super().__init__()
         self.ball_radius = 10
-        self.ball_x = 190
+        self.ball_x = 50
         self.ball_y = 250
         self.setMinimumSize(200, 200)
+        self.width = width
+        self.height = height
         #top = 30
         #middle = 140
         #bottom = 250
         
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        # leg peak = -80
-        #mid = -200
-        # Floor = -270
+        
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
@@ -28,10 +28,10 @@ class BallWidget(QWidget):
         
         border_thickness = 1
         painter.setPen(QPen(Qt.white, 2))
-        painter.drawLine(0,2,0,250)
-        painter.drawLine(0,250,375,250)
-        painter.drawLine(375,250,375,2)
-        painter.drawLine(375,2,0,2)
+        # painter.drawLine(0,2,0,250)
+        # painter.drawLine(0,250,375,250)
+        # painter.drawLine(375,250,375,2)
+        # painter.drawLine(375,2,0,2)
 
         painter.setPen(Qt.NoPen)
         painter.setBrush(QBrush(QColor(255, 0, 0)))  # Red color
@@ -39,4 +39,5 @@ class BallWidget(QWidget):
 
     def update_ball_position(self, y):
         self.ball_y = ((-(44.0/91) * (y-40)) + 30)
+        #self.ball_y = 380
         self.update()

@@ -181,7 +181,7 @@ class videoGui():
             self.crosshair_v = pg.InfiniteLine(angle=90, movable=False, pen=moving_pen)
             self.graphWidget.addItem(self.crosshair_v, ignoreBounds=True)
             self.crosshair_cursor = pg.InfiniteLine(pos = 500, angle=90, movable=True, pen=cursor_pen)
-            self.crosshair_cursor.sigDragged.connect(self.redlineVideoMove)
+            #self.crosshair_cursor.sigDragged.connect(self.redlineVideoMove)
             self.graphWidget.setMouseEnabled(y=False)
             self.graphWidget.addItem(self.crosshair_cursor, ignoreBounds=True)
             
@@ -382,11 +382,12 @@ class videoGui():
                 # Update Ball Position
                 self.ballWidget.update_ball_position(self.csv_process.barXToY(self.crosshair_v.x()))
         #update the video and slider
-        def redlineVideoMove(self): 
-            if(self.link_pressed):
-                redline_time_diff = self.crosshair_cursor.x() - self.linked_data_time
-                self.video_slider.setValue(self.linked_video_pos + redline_time_diff)
-                self.updateVideoFrame()
+        # def redlineVideoMove(self): 
+        #     if(self.link_pressed):
+        #         redline_time_diff = self.crosshair_cursor.x() - self.linked_data_time
+        #         print(redline_time_diff)
+        #         self.video_slider.setValue(self.linked_video_pos + redline_time_diff)
+        #         self.updateVideoFrame()
 
         def pause(self):
             self.pause_pressed = True
@@ -431,8 +432,11 @@ class videoGui():
         def keyPressEvent(self, event):
             if(not self.link_pressed):
                 if event.key() == Qt.Key.Key_Left:
-                    if((self.crosshair_cursor.x() - 0.2) >= 0):
-                        self.crosshair_cursor.setPos(self.crosshair_cursor.x() - 0.2)
+                    if event.modifiers() == Qt.ShiftModifier:
+                        print("Hi")
+                    else:
+                        if((self.crosshair_cursor.x() - 0.2) >= 0):
+                            self.crosshair_cursor.setPos(self.crosshair_cursor.x() - 0.2)
                 elif event.key() == Qt.Key.Key_Right:
                     self.crosshair_cursor.setPos(self.crosshair_cursor.x() + 0.2)
             if event.key() == Qt.Key.Key_R:
@@ -465,6 +469,8 @@ class videoGui():
             #print(self.video_slider.value())
             self.thread.input_frame = (round(self.video_slider.value() * self.thread.cap.get(cv2.CAP_PROP_FPS)))
             #self.thread.cap.set(cv2.CAP_PROP_POS_FRAMES, self.thread.input_frame)
+            if(self.link_pressed):
+                self.crosshair_cursor.setPos(self.linked_data_time + (self.video_slider.value() - self.linked_video_pos))
 
 
     

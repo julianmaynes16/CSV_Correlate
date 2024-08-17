@@ -255,7 +255,7 @@ class csvProcess():
                     if recent_high > (self.force_height[i] + 120):
                         # Adds time of leg movement to list. 
                         recent_high = self.force_height[i]
-                        self.step_list.append(self.force_time[i] - self.detection_offset)
+                        self.step_list.append(round(self.force_time[i] - self.detection_offset))
 
 
 # writes new times to the csv in mocap

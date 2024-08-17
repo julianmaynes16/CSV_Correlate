@@ -79,7 +79,7 @@ class VideoThread(QThread):
             # How many fames have passed in any given amount of time
             frames_since_begin = (self.cap.get(cv2.CAP_PROP_POS_FRAMES) - self.input_frame)
             # If goes past gif alloted time
-            if ((frames_since_begin > frames_before_loop) or (frames_since_begin < 0) or (self.reset_flag)):
+            if ((frames_since_begin > frames_before_loop) or (frames_since_begin < 0) or (self.reset_flag) or ((self.cap.get(cv2.CAP_PROP_POS_FRAMES) == self.cap.get(cv2.CAP_PROP_FRAME_COUNT)))):
                 self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.input_frame)
                 self.curr_frame = self.input_frame
                 frames_since_begin = 0

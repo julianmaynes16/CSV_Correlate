@@ -215,6 +215,7 @@ class videoGui():
             #Disable arrow keys controlling slider
             self.video_slider.setFocusPolicy(Qt.NoFocus)
             self.video_slider.valueChanged.connect(self.updateVideoFrame)
+            self.video_slider.setToolTip("00:00")
 
             style = self.style()
             #Pause button setup
@@ -260,7 +261,7 @@ class videoGui():
             """)
             self.current_step_viewing = 0
             next_step_icon = QIcon.fromTheme(QIcon.ThemeIcon.GoNext)
-            self._next_step_action = self.video_toolbar.addAction(next_step_icon, "Next Step")
+            self._next_step_action = self.video_toolbar.addAction(next_step_icon, "Next Estimated Footstep")
             self._next_step_action.triggered.connect(self.nextStep)
             self._next_tool_button = self.video_toolbar.widgetForAction(self._next_step_action)
             self._next_tool_button.setStyleSheet("""
@@ -277,7 +278,7 @@ class videoGui():
             """)
 
             previous_step_icon = QIcon.fromTheme(QIcon.ThemeIcon.GoPrevious)
-            self._previous_step_action = self.video_toolbar.addAction(previous_step_icon, "Previous Step")
+            self._previous_step_action = self.video_toolbar.addAction(previous_step_icon, "Previous Estimated Footstep")
             self._previous_step_action.triggered.connect(self.previousStep)
             self._previous_tool_button = self.video_toolbar.widgetForAction(self._previous_step_action)
             self._previous_tool_button.setStyleSheet("""
@@ -302,9 +303,30 @@ class videoGui():
             self.messagebox.setFocusPolicy(Qt.NoFocus)
             self.messagebox.setFont(QFont('Helvetica Neue', 18))
             self.messagebox.setAlignment(Qt.AlignCenter)
-            self.messagebox.setText("Match the video progress bar with the red line")
+            self.messagebox.setText("Match the video progress bar with the red line, then link")
 
-
+            
+            #Instructions box
+            self.instructions_box = QPlainTextEdit(self)
+            self.instructions_box.setReadOnly(True)
+            #self.instructions_box.resize(1000,600)
+            #self.instructions_box.setFixedWidth(600)
+            self.instructions_box.setStyleSheet("""
+                QPlainTextEdit {
+                    background-color: rgb(30, 30, 30);
+                    color: rgb(65, 65, 65);
+                    font: 14px;
+                }
+            """)
+            self.instructions_box.insertPlainText("Match up the video slider with its appropriate graph position and link \n")
+            self.instructions_box.insertPlainText("After linking control video and graph line using the video slider\n \n")
+            self.instructions_box.insertPlainText("Controls: \n")
+            self.instructions_box.insertPlainText("Reset Gif playback                   R \n")
+            self.instructions_box.insertPlainText("Move graph line back                 Left Arrow\n")
+            self.instructions_box.insertPlainText("Move graph line forward              Right Arrow \n")
+            self.instructions_box.insertPlainText("Moves graph line back slower         Shift +  Left Arrow\n")
+            self.instructions_box.insertPlainText("Moves graph line forward faster      Shift + Right Arrow  \n")
+            self.instructions_box.setFrameStyle(QFrame.NoFrame)
             #layout
             #controls
             control_layout = QHBoxLayout()
@@ -316,7 +338,8 @@ class videoGui():
             video_controls.addLayout(control_layout)
             #Add ball
             video_ball = QHBoxLayout()
-            video_ball.addStretch()
+            video_ball.addWidget(self.instructions_box, stretch = 1)
+            #video_ball.addStretch()
             video_ball.addLayout(video_controls)
             video_ball.addWidget(self.ballWidget)
             video_ball.addStretch()
@@ -410,7 +433,7 @@ class videoGui():
                 link_step_diff = self.csv_process.step_list[self.current_step_viewing] - self.linked_data_time # if step is 400 and link is 500 it will be -100
                 self.video_slider.setValue(self.linked_video_pos + link_step_diff)
                 self.updateVideoFrame()
-                self.messagebox.setText(f"Step: {self.current_step_viewing}")
+                #self.messagebox.setText(f"Step: {self.current_step_viewing}")
 
         def previousStep(self):
             # 8 steps, max is 7
@@ -420,7 +443,7 @@ class videoGui():
                 link_step_diff = self.csv_process.step_list[self.current_step_viewing] - self.linked_data_time # if step is 400 and link is 500 it will be -100
                 self.video_slider.setValue(self.linked_video_pos + link_step_diff)
                 self.updateVideoFrame()
-                self.messagebox.setText(f"Step: {self.current_step_viewing}")
+                #self.messagebox.setText(f"Step: {self.current_step_viewing}")
 
         
         def toggle_pause(self):
@@ -433,12 +456,16 @@ class videoGui():
             if(not self.link_pressed):
                 if event.key() == Qt.Key.Key_Left:
                     if event.modifiers() == Qt.ShiftModifier:
-                        print("Hi")
+                        if((self.crosshair_cursor.x() - 0.02) >= 0):
+                            self.crosshair_cursor.setPos(self.crosshair_cursor.x() - 0.02)
                     else:
                         if((self.crosshair_cursor.x() - 0.2) >= 0):
                             self.crosshair_cursor.setPos(self.crosshair_cursor.x() - 0.2)
                 elif event.key() == Qt.Key.Key_Right:
-                    self.crosshair_cursor.setPos(self.crosshair_cursor.x() + 0.2)
+                    if event.modifiers() == Qt.ShiftModifier:
+                        self.crosshair_cursor.setPos(self.crosshair_cursor.x() + 0.02)
+                    else:
+                        self.crosshair_cursor.setPos(self.crosshair_cursor.x() + 0.2)
             if event.key() == Qt.Key.Key_R:
                 self.reset_gif_send.emit()
 
@@ -466,9 +493,9 @@ class videoGui():
 
         # Set Video to a frame
         def updateVideoFrame(self):
-            #print(self.video_slider.value())
+            
             self.thread.input_frame = (round(self.video_slider.value() * self.thread.cap.get(cv2.CAP_PROP_FPS)))
-            #self.thread.cap.set(cv2.CAP_PROP_POS_FRAMES, self.thread.input_frame)
+            self.video_slider.setToolTip(f"{int(self.video_slider.value() / 60)}:{self.video_slider.value() % 60}")
             if(self.link_pressed):
                 self.crosshair_cursor.setPos(self.linked_data_time + (self.video_slider.value() - self.linked_video_pos))
 

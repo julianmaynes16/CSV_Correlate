@@ -157,7 +157,7 @@ class videoGui():
 
             #Main setup
             #self.setStyleSheet("background-color: white;")
-            self.setWindowTitle("RoboCorrelate")
+            self.setWindowTitle("VideoSync")
             self.setMinimumSize(QSize(400,300))
             
             #Plot

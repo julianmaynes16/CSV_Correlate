@@ -1,20 +1,15 @@
-import os
-import pandas as pd
-import csv
 from PySide6.QtCore import *
 from PySide6.QtWidgets import *
 from PySide6.QtGui import *
 from PySide6.QtMultimedia import *
 from PySide6.QtMultimediaWidgets import *
 import pyqtgraph as pg
-import sys
 import cv2
 import time
-import matplotlib.pyplot as plt
+import math
 from videoThread import *
 from ballWidget import *
 from csvProcess import *
-from bisect import bisect_left
 
 
 class videoGui():
@@ -262,23 +257,6 @@ class videoGui():
                     background-color: transparent;
                 }
             """)
-            self.current_step_viewing = 0
-            next_step_icon = QIcon.fromTheme(QIcon.ThemeIcon.GoNext)
-            self._next_step_action = self.video_toolbar.addAction(next_step_icon, "Next Estimated Footstep")
-            self._next_step_action.triggered.connect(self.nextStep)
-            self._next_tool_button = self.video_toolbar.widgetForAction(self._next_step_action)
-            self._next_tool_button.setStyleSheet("""
-                QToolButton {
-                    background-color: transparent;
-                    border: none;
-                }
-                QToolButton:checked {
-                    background-color: transparent;
-                }
-                QToolButton:pressed {
-                    background-color: transparent;
-                }
-            """)
 
             previous_step_icon = QIcon.fromTheme(QIcon.ThemeIcon.GoPrevious)
             self._previous_step_action = self.video_toolbar.addAction(previous_step_icon, "Previous Estimated Footstep")
@@ -297,6 +275,23 @@ class videoGui():
                 }
             """)
 
+            self.current_step_viewing = 0
+            next_step_icon = QIcon.fromTheme(QIcon.ThemeIcon.GoNext)
+            self._next_step_action = self.video_toolbar.addAction(next_step_icon, "Next Estimated Footstep")
+            self._next_step_action.triggered.connect(self.nextStep)
+            self._next_tool_button = self.video_toolbar.widgetForAction(self._next_step_action)
+            self._next_tool_button.setStyleSheet("""
+                QToolButton {
+                    background-color: transparent;
+                    border: none;
+                }
+                QToolButton:checked {
+                    background-color: transparent;
+                }
+                QToolButton:pressed {
+                    background-color: transparent;
+                }
+            """)
 
 
             # Global message box
@@ -491,6 +486,16 @@ class videoGui():
            self.messagebox.setText(f"Synced. Time difference = {round((self.linked_data_time - self.linked_video_pos), 2)} seconds")
            self.crosshair_cursor.setMovable(False)
            self.crosshair_cursor.setPen(self.cursor_pen_link)
+           video_step_list = []
+           print("Video steps:")
+           for time in self.csv_process.step_list:
+                link_step_diff = time - self.linked_data_time # if step is 400 and link is 500 it will be -100
+                video_step_time = round(self.linked_video_pos + link_step_diff)
+                if(math.floor(video_step_time / 60) < 0):
+                    continue
+                print(f"{math.floor(video_step_time / 60)}:{str(video_step_time % 60).rjust(2, "0")}  ")
+          
+               
 
         def unlink(self):
             self.link_pressed = False
@@ -503,7 +508,7 @@ class videoGui():
         def updateVideoFrame(self):
             
             self.thread.input_frame = (round(self.video_slider.value() * self.thread.cap.get(cv2.CAP_PROP_FPS)))
-            self.video_slider.setToolTip(f"{int(self.video_slider.value() / 60)}:{self.video_slider.value() % 60}")
+            self.video_slider.setToolTip(f"{int(self.video_slider.value() / 60)}:{str(self.video_slider.value() % 60).rjust(2,"0")}")
             if(self.link_pressed):
                 self.crosshair_cursor.setPos(self.linked_data_time + (self.video_slider.value() - self.linked_video_pos))
 

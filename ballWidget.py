@@ -38,6 +38,7 @@ class BallWidget(QWidget):
         painter.drawEllipse(self.ball_x - self.ball_radius, self.ball_y - self.ball_radius, self.ball_radius * 2, self.ball_radius * 2)
 
     def update_ball_position(self, y):
-        self.ball_y = ((-(44.0/91) * (y-40)) + 30)
+        #self.ball_y = ((-(44.0/91) * (y-40)) + 30)
+        self.ball_y = (((-44000.0/93)* (y-0.04)) + 30)
         #self.ball_y = 380
         self.update()

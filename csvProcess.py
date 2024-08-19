@@ -17,28 +17,27 @@ from bisect import bisect_left
 
 # prints out messages if able to find the files in the folders
 class csvProcess():
-    def __init__(self, csv_path, leg_number=0, data_frequency = 1, subsample_rate=60, detection_offset = 5,show_plot = True):
+    def __init__(self, csv_path, data_header, subsample_rate=60):
         #self.video_path = video_path
         self.force_file = csv_path
 
-        self.leg_number = leg_number
-        self.data_frequency = data_frequency
+        #self.leg_number = leg_number
+        self.data_header = data_header
 
         self.subsample_rate = subsample_rate
 
-        self.show_plot = show_plot
-        self.mocap_height = []
-        self.mocap_time = []
+        #self.mocap_height = []
+        #self.mocap_time = []
         self.force_height = []
         self.force_time = []
         self.step_list = []
         self.force_start_index = 0
-        self.mocap_start_index = 0
-        self.detection_offset = detection_offset
+        #self.mocap_start_index = 0
+        self.detection_offset = 5
 
     # file reference to the low level file and force file. Note: force refers to low level in every instance here
-        force_file_list = os.listdir(os.path.join(os.getcwd(), 'force'))
-        mocap_file_list = os.listdir(os.path.join(os.getcwd(), 'mocap'))
+        #force_file_list = os.listdir(os.path.join(os.getcwd(), 'force'))
+        #mocap_file_list = os.listdir(os.path.join(os.getcwd(), 'mocap'))
     # finds csv files without needing a name
         
 
@@ -53,31 +52,32 @@ class csvProcess():
         #         print("Found mocap file!")
         
 #Uses leg force to find when SPIRIT stands up 
-    def findStartForce(self):
-        with open(self.force_file, 'r') as csv_file:
-            reader = csv.DictReader(csv_file)
-            force_index = 1
-            print("Finding start force time...")
-            for row in reader:
-                # which leg is used shouldn't matter because its just standing up so I chose leg 0
-                column_value = row['Leg 0 Z force']
-                force_index +=1
-                # -30 is the force threshold for saying that SPIRIT has started 
-                if float(column_value) < -30:
-                    self.force_start_index = force_index
-                    break
+    # def findStartForce(self):
+    #     with open(self.force_file, 'r') as csv_file:
+    #         reader = csv.DictReader(csv_file)
+    #         force_index = 1
+    #         print("Finding start force time...")
+    #         for row in reader:
+    #             # which leg is used shouldn't matter because its just standing up so I chose leg 0
+    #             column_value = row['Leg 0 Z force']
+    #             force_index +=1
+    #             # -30 is the force threshold for saying that SPIRIT has started 
+    #             if float(column_value) < -30:
+    #                 self.force_start_index = force_index
+    #                 break
     # Returns all low-level leg Z samples(converted to M) in accordance with the freq interval
     def copyForceForces(self):
         with open(self.force_file, 'r') as csv_file:
-            reader = csv.reader(csv_file)
+            reader = csv.DictReader(csv_file)
             data_iterator = 0
             force_height_iterator = 0
-            print("Copying height data...")
+            print("Copying data...")
             for row in reader:
                 if (force_height_iterator > 0) and (data_iterator > int(1000 / self.subsample_rate)):
                     # chooses Z coords depending on leg chosen
                     data_iterator = 0 
-                    self.force_height.append(float(row[47 + (3 * self.leg_number)]) * 1000)
+                    #self.force_height.append(float(row[47 + (3 * self.leg_number)]) * 1000)
+                    self.force_height.append(float(row[self.data_header]))
                 data_iterator += 1
                 force_height_iterator += 1
             print("Done.")
@@ -95,30 +95,30 @@ class csvProcess():
                 data_iterator += 1
                 force_time_iterator += 1
 
-    def returnTruncatedData(self, input_height, input_time, datatype = "force", framerate = 60):
-        print("Truncating data...")
-        self.truncated_fps = framerate
-        array_iterator = 0
-        data_iterator = 0
-        return_height = []
-        return_time =[]
-        if(datatype == "mocap"):
-                data_fps = 120
-        elif(datatype == "force"):
-            data_fps = 1000
-            for data_item in input_height:
-                if (data_iterator > int(data_fps / framerate)):
-                    data_iterator = 0
-                    return_height.append(data_item)
-                    return_time.append(input_time[array_iterator])
-                    array_iterator += 1
+    # def returnTruncatedData(self, input_height, input_time, datatype = "force", framerate = 60):
+    #     print("Truncating data...")
+    #     self.truncated_fps = framerate
+    #     array_iterator = 0
+    #     data_iterator = 0
+    #     return_height = []
+    #     return_time =[]
+    #     if(datatype == "mocap"):
+    #             data_fps = 120
+    #     elif(datatype == "force"):
+    #         data_fps = 1000
+    #         for data_item in input_height:
+    #             if (data_iterator > int(data_fps / framerate)):
+    #                 data_iterator = 0
+    #                 return_height.append(data_item)
+    #                 return_time.append(input_time[array_iterator])
+    #                 array_iterator += 1
                     
-                else:
-                    data_iterator +=1
-                    array_iterator +=1
-        self.force_height = return_height
-        self.force_time = return_time
-        print("Truncation Done.")
+    #             else:
+    #                 data_iterator +=1
+    #                 array_iterator +=1
+    #     self.force_height = return_height
+    #     self.force_time = return_time
+    #     print("Truncation Done.")
     
     def stepChop(self):
         recent_high = 0
@@ -134,9 +134,10 @@ class csvProcess():
             # Plateu detected subroutine
             if(plateu):
                 # If the low level leg height begins to rise considerably, end of standing and sitting and beginning rising 
-                if(round(self.force_height[i], 4) > (round(self.force_height[i-50] + 10, 4))):
+                #if(round(self.force_height[i], 4) > (round(self.force_height[i-50] + 10, 4))):
+                if(round(self.force_height[i], 4) > (round(self.force_height[i-0.050] + 0.010, 4))):
                     plateu = False
-                    recent_high = -400
+                    recent_high = -0.400
             else:
                 # If the height increases, a leg is moving up, updating that height to the recent highest
                 if self.force_height[i] > recent_high:
@@ -144,7 +145,7 @@ class csvProcess():
                 # If the leg height starts to dip
                 elif self.force_height[i] < recent_high:
                     # The leg dip has to be significant enough 
-                    if recent_high > (self.force_height[i] + 120):
+                    if recent_high > (self.force_height[i] + 0.120):
                         # Adds time of leg movement to list. 
                         recent_high = self.force_height[i]
                         self.step_list.append(round(self.force_time[i] - self.detection_offset))

@@ -18,18 +18,20 @@ from bisect import bisect_left
 
 
 class videoGui():
-    def __init__(self, csv_process, video_fps = 30, input_frame = 0, seconds_before_loop = 5):
+    def __init__(self, video_path, csv_process, seconds_before_loop = 5):
         self.csv_process = csv_process
-        self.video_fps = video_fps
-        self.input_frame = input_frame
+        self.video_fps = 30
+        self.input_frame = 0
         self.seconds_before_loop = seconds_before_loop
         self.data_fps = self.csv_process.subsample_rate
 
-        video_file_list = os.listdir(os.path.join(os.getcwd(), 'video'))
-        for file in video_file_list: 
-            if ((file.endswith('.mp4')) or (file.endswith('.MOV'))):
-                self.video_file = os.path.join(os.path.join(os.getcwd(), 'video'), file)
-                print("Found video file!")
+        self.video_file = video_path
+
+        # video_file_list = os.listdir(os.path.join(os.getcwd(), 'video'))
+        # for file in video_file_list: 
+        #     if ((file.endswith('.mp4')) or (file.endswith('.MOV'))):
+        #         self.video_file = os.path.join(os.path.join(os.getcwd(), 'video'), file)
+        #         print("Found video file!")
 
 
     def inputFrameToGraphXFrame(self, data_type, input_frame):
@@ -166,7 +168,7 @@ class videoGui():
             self.graphWidget.setTitle("Low-Level Data ", color="w", size="15pt")
             #Set axis labels
             styles = {"color": "#fff", "font-size": "15px"}
-            self.graphWidget.setLabel("left", "Leg Height (mm)", **styles)
+            self.graphWidget.setLabel("left", "Leg Height", **styles)
             self.graphWidget.setLabel("bottom", "Time (s)", **styles)
 
             #Add grid

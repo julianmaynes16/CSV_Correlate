@@ -8,7 +8,7 @@ def main():
     #csvAlter(show_plot = False)
     app = QApplication(sys.argv)
 
-    csv_process = csvProcess(leg_number = 0, data_frequency = 1, truncated_fps = 60, show_plot = False)
+    csv_process = csvProcess("C:/Users/thela/OneDrive/Documents/CSV_Correlate/force/log00-04.csv",leg_number = 0, data_frequency = 1, subsample_rate = 60, show_plot = False)
     csv_process.copyForceForces()
     csv_process.copyForceTime()
     csv_process.stepChop()

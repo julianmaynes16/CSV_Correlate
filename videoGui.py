@@ -23,7 +23,7 @@ class videoGui():
         self.video_fps = video_fps
         self.input_frame = input_frame
         self.seconds_before_loop = seconds_before_loop
-        self.data_fps = self.csv_process.truncated_fps
+        self.data_fps = self.csv_process.subsample_rate
 
         video_file_list = os.listdir(os.path.join(os.getcwd(), 'video'))
         for file in video_file_list: 
@@ -146,7 +146,7 @@ class videoGui():
 
             self.pause_pressed = False
         # Truncate input values
-            self.csv_process.returnTruncatedData(self.csv_process.force_height, self.csv_process.force_time, datatype = "force", framerate = 60)
+            #self.csv_process.returnTruncatedData(self.csv_process.force_height, self.csv_process.force_time, datatype = "force", framerate = 60)
 
             self.thirty_fps_begin_linemove = time.time()
             self.loop_time = time.time()
@@ -173,14 +173,15 @@ class videoGui():
             self.graphWidget.showGrid(x=True, y=True)
 
             pen = pg.mkPen(color=(255, 255, 255), width = 3)
-            cursor_pen = pg.mkPen(color = (255,0,0), width = 2)
+            self.cursor_pen = pg.mkPen(color = (255,0,0), width = 2)
+            self.cursor_pen_link = pg.mkPen(color = (0,0,0), width = 4)
             moving_pen = pg.mkPen(color = (255, 165, 0), width = 1)
             self.graphWidget.plot(self.csv_process.force_time, self.csv_process.force_height, pen=pen)
 
             #crosshair lines
             self.crosshair_v = pg.InfiniteLine(angle=90, movable=False, pen=moving_pen)
             self.graphWidget.addItem(self.crosshair_v, ignoreBounds=True)
-            self.crosshair_cursor = pg.InfiniteLine(pos = 500, angle=90, movable=True, pen=cursor_pen)
+            self.crosshair_cursor = pg.InfiniteLine(pos = 500, angle=90, movable=True, pen=self.cursor_pen)
             #self.crosshair_cursor.sigDragged.connect(self.redlineVideoMove)
             self.graphWidget.setMouseEnabled(y=False)
             self.graphWidget.addItem(self.crosshair_cursor, ignoreBounds=True)
@@ -321,10 +322,10 @@ class videoGui():
             self.instructions_box.insertPlainText("Match up the video slider with its appropriate graph position and link \n")
             self.instructions_box.insertPlainText("After linking control video and graph line using the video slider\n \n")
             self.instructions_box.insertPlainText("Controls: \n")
-            self.instructions_box.insertPlainText("Reset Gif playback                   R \n")
-            self.instructions_box.insertPlainText("Move graph line back                 Left Arrow\n")
-            self.instructions_box.insertPlainText("Move graph line forward              Right Arrow \n")
-            self.instructions_box.insertPlainText("Moves graph line back slower         Shift +  Left Arrow\n")
+            self.instructions_box.insertPlainText("Reset Gif playback                            R \n")
+            self.instructions_box.insertPlainText("Move graph line back                       Left Arrow\n")
+            self.instructions_box.insertPlainText("Move graph line forward                  Right Arrow \n")
+            self.instructions_box.insertPlainText("Moves graph line back slower          Shift +  Left Arrow\n")
             self.instructions_box.insertPlainText("Moves graph line forward faster      Shift + Right Arrow  \n")
             self.instructions_box.setFrameStyle(QFrame.NoFrame)
             #layout
@@ -338,11 +339,12 @@ class videoGui():
             video_controls.addLayout(control_layout)
             #Add ball
             video_ball = QHBoxLayout()
-            video_ball.addWidget(self.instructions_box, stretch = 1)
+            video_ball.addWidget(self.instructions_box, stretch=1)
+            
             #video_ball.addStretch()
-            video_ball.addLayout(video_controls)
-            video_ball.addWidget(self.ballWidget)
-            video_ball.addStretch()
+            video_ball.addLayout(video_controls, stretch=1)
+            video_ball.addWidget(self.ballWidget, stretch=1)
+            #video_ball.addStretch()
             #Add Message Bar
             message_video_ball = QVBoxLayout()
             message_video_ball.addWidget(self.messagebox)
@@ -485,11 +487,15 @@ class videoGui():
            self.link_pressed = True
            self._link_action.setText("Unlink")
            self.messagebox.setText(f"Synced. Time difference = {round((self.linked_data_time - self.linked_video_pos), 2)} seconds")
+           self.crosshair_cursor.setMovable(False)
+           self.crosshair_cursor.setPen(self.cursor_pen_link)
 
         def unlink(self):
             self.link_pressed = False
             self._link_action.setText("Link")
             self.messagebox.setText(f"Unsynced.")
+            self.crosshair_cursor.setMovable(True)
+            self.crosshair_cursor.setPen(self.cursor_pen)
 
         # Set Video to a frame
         def updateVideoFrame(self):

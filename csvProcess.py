@@ -17,7 +17,7 @@ from bisect import bisect_left
 
 # prints out messages if able to find the files in the folders
 class csvProcess():
-    def __init__(self, csv_path, data_header, subsample_rate=60):
+    def __init__(self, csv_path, data_header, subsample_rate=60, header_row = 0):
         #self.video_path = video_path
         self.force_file = csv_path
 
@@ -25,6 +25,8 @@ class csvProcess():
         self.data_header = data_header
 
         self.subsample_rate = subsample_rate
+
+        self.header_row = header_row
 
         #self.mocap_height = []
         #self.mocap_time = []
@@ -68,12 +70,12 @@ class csvProcess():
     # Returns all low-level leg Z samples(converted to M) in accordance with the freq interval
     def copyForceForces(self):
         with open(self.force_file, 'r') as csv_file:
-            reader = csv.DictReader(csv_file)
+            reader = csv.reader(csv_file)
             data_iterator = 0
             force_height_iterator = 0
             print("Copying data...")
             for row in reader:
-                if (force_height_iterator > 0) and (data_iterator > int(1000 / self.subsample_rate)):
+                if (force_height_iterator > self.header_row) and (data_iterator > int(1000 / self.subsample_rate)):
                     # chooses Z coords depending on leg chosen
                     data_iterator = 0 
                     #self.force_height.append(float(row[47 + (3 * self.leg_number)]) * 1000)

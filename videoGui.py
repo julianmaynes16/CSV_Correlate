@@ -13,7 +13,7 @@ from csvProcess import *
 
 
 class videoGui():
-    def __init__(self, video_path, csv_process, seconds_before_loop = 5):
+    def __init__(self, video_path, csv_process, header_name, seconds_before_loop = 5):
         self.csv_process = csv_process
         self.video_fps = 30
         self.input_frame = 0
@@ -21,6 +21,8 @@ class videoGui():
         self.data_fps = self.csv_process.subsample_rate
 
         self.video_file = video_path
+
+        self.header_name = header_name
 
         # video_file_list = os.listdir(os.path.join(os.getcwd(), 'video'))
         # for file in video_file_list: 
@@ -163,7 +165,7 @@ class videoGui():
             self.graphWidget.setTitle("Low-Level Data ", color="w", size="15pt")
             #Set axis labels
             styles = {"color": "#fff", "font-size": "15px"}
-            self.graphWidget.setLabel("left", "Leg Height", **styles)
+            self.graphWidget.setLabel("left", self.video_gui.header_name, **styles)
             self.graphWidget.setLabel("bottom", "Time (s)", **styles)
 
             #Add grid

@@ -89,7 +89,7 @@ class csvProcess():
             reader = csv.reader(csv_file)
             force_time_iterator = 0
             data_iterator = 0
-            print("Copying force time data...")
+            print("Copying time data...")
             for row in reader:
                 if (force_time_iterator > 0) and (data_iterator > int(1000 / self.subsample_rate)):
                     data_iterator = 0

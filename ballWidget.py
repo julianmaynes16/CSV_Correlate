@@ -7,6 +7,9 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 class BallWidget(QWidget):
+    #TODO FILL IN DOCSTRING
+    """_summary_
+    """
     def __init__(self, width, height):
         super().__init__()
         self.ball_radius = 10
@@ -22,23 +25,31 @@ class BallWidget(QWidget):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         
     def paintEvent(self, event):
+        #TODO FILL IN DOCSTRING
+        """_summary_
+
+        Args:
+            event (_type_): _description_
+        """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         #draw border
         
         border_thickness = 1
         painter.setPen(QPen(Qt.white, 2))
-        # painter.drawLine(0,2,0,250)
-        # painter.drawLine(0,250,375,250)
-        # painter.drawLine(375,250,375,2)
-        # painter.drawLine(375,2,0,2)
 
         painter.setPen(Qt.NoPen)
         painter.setBrush(QBrush(QColor(255, 0, 0)))  # Red color
         painter.drawEllipse(self.ball_x - self.ball_radius, self.ball_y - self.ball_radius, self.ball_radius * 2, self.ball_radius * 2)
 
     def update_ball_position(self, y):
+        #TODO FILL IN DOCSTRING
+        """_summary_
+
+        Args:
+            y (_type_): _description_
+        """
         #self.ball_y = ((-(44.0/91) * (y-40)) + 30)
-        self.ball_y = (((-44000.0/93)* (y-0.04)) + 30)
+        self.ball_y = (((-44000.0/93)* (y-0.04)) + 30) #TODO Replace MAGIC NUMBERS
         #self.ball_y = 380
         self.update()

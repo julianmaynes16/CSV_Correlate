@@ -6,17 +6,34 @@ import argparse
 def main():
 
     def get_csv_headers(csv_path, header_row = 0):
+        """Return just the CSV headers in list 
 
-        """Return just the CSV headers in list Args: csv_path (str): path to a csv file header_row (int, optional): Row where header is and data starts. Allows for and ignores non-standard header rows. Defaults to 0. Returns: List(str): list of column headers in csv at header_row """ 
+        Args:
+            csv_path (str): path to a csv file 
+            header_row (int, optional): Row where header is and data starts. 
+                Allows for and ignores non-standard header rows. Defaults to 0.
+
+        Returns:
+            List(str): list of column headers in csv at header_row
+        """
         with open(csv_path,'r') as f: 
             for _ in range(header_row): 
                 f.readline() 
             headers = f.readline().split(',') 
             return headers
-            #reader = csv.reader(f)
-            #headers = next(reader)
-            #return headers
+        
     def headerToIndex(csv_path, header_string, header_row = 0):
+        #TODO FILL IN DOCSTRING
+        """_summary_
+
+        Args:
+            csv_path (_type_): _description_
+            header_string (_type_): _description_
+            header_row (int, optional): _description_. Defaults to 0.
+
+        Returns:
+            _type_: _description_
+        """
         row_index = 0
         with open(csv_path,'r') as f:
             reader = csv.reader(f)
@@ -31,15 +48,6 @@ def main():
                 return header_index
             header_index += 1
         return header_index
-        
-    
-    # def get_csv_num_data_rows(csv_path, header_row = 0): 
-    #     """Return number of data rows in a csv file by reading whole file. May be expensive for large files. Args: csv_path (str): path to a csv file header_row (int, optional): Row where header is and data starts. Allows for and ignores non-standard header rows. Defaults to 0. Returns: int: Number of data rows after header """
-    #     with open(csv_path,'r') as f:
-    #         count = 0 
-    #         for _ in f: 
-    #             count += 1 
-    #         return count - (header_row + 1)
     
     parse = argparse.ArgumentParser("Video Synchronizing GUI. Used to get the time offset in seconds between a video and a data series from a csv. USE QUOTES AROUND STRINGS.\n")
     parse.add_argument('--video_path', '-v', type=str, default=None, help='Path to video to be synced') 
@@ -75,20 +83,10 @@ def main():
     print("CSV Sync header: ", header_name, " Column: ", args.sync_header) 
     app = QApplication(sys.argv)
 
-
-    #Debug: csv_path = "C:/Users/thela/OneDrive/Documents/CSV_Correlate/force/log00-04.csv"
-    #Debug: sync_header = 'Leg 0 Z'
-    #Debug: data_sub_sample_rate = 60
-    #Debug: video_path = "C:/Users/thela/OneDrive/Documents/CSV_Correlate/video/Rigid2sand2rigid.mp4"
-    #Debug: loop_duration = 5
-
-    #csv_process = csvProcess(args.csv_path, headerToIndex(args.csv_path, args.sync_header, args.header_row), args.data_sub_sample_rate, args.header_row)
     csv_process = csvProcess(args.csv_path, args.sync_header, args.data_sub_sample_rate, args.header_row)
     csv_process.copyForceForces()
     csv_process.copyForceTime()
     csv_process.stepChop()
-    # 12120 is the frame of the breaking
-
 
     video_gui = videoGui(args.video_path, csv_process, header_name, args.loop_duration)
 
@@ -97,7 +95,6 @@ def main():
     main_window.show()
 
     sys.exit(app.exec())
-    #input_frame = 3000
-
+    
 if __name__ == "__main__":
     main()

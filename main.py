@@ -58,8 +58,8 @@ def main():
     parse.add_argument('--data_sub_sample_rate', '-r', type=float, default=60.0, help='Subsample rate in Hz for CSV data')
     
     args = parse.parse_args() 
-    ############################################################### # This is an optional add on that allows the user to find files 
-    ############################################################### 
+    
+    # Ask user for files if not given  
     if args.video_path is None: 
         args.video_path = eg.fileopenbox("Find Video Path") 
     print("Video Path: ", args.video_path) 

@@ -50,6 +50,6 @@ class BallWidget(QWidget):
             y (_type_): _description_
         """
         #self.ball_y = ((-(44.0/91) * (y-40)) + 30)
-        self.ball_y = (((-44000.0/93)* (y-0.04)) + 30)
+        self.ball_y = (((-44000.0/93)* (y-0.04)) + 30) #TODO Replace MAGIC NUMBERS
         #self.ball_y = 380
         self.update()

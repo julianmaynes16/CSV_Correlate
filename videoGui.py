@@ -546,7 +546,7 @@ class videoGui():
                 video_step_time = round(self.linked_video_pos + link_step_diff)
                 if(math.floor(video_step_time / 60) < 0):
                     continue
-                print(f"{math.floor(video_step_time / 60)}:{str(video_step_time % 60).rjust(2, "0")}  ")
+                print(f"{math.floor(video_step_time / 60)}:{str(video_step_time % 60).rjust(2, "0")}  ") #TODO Consider making a helper funtion for MM:SS conversion
           
                
 

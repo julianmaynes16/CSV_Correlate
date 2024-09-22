@@ -14,12 +14,18 @@ import time
 
 
 class GifState():
+    #TODO FILL IN DOCSTRING
+    """_summary_
+    """
     def __init__(self, pixmap, time):
         self.pixmap = pixmap
         self.time = time
 
 
 class VideoThread(QThread):
+    #TODO FILL IN DOCSTRING
+    """_summary_
+    """
     change_pixmap_signal = Signal(GifState)
     pause_video_received = Signal()
     resume_video_received = Signal()
@@ -38,15 +44,27 @@ class VideoThread(QThread):
         self.reset_flag = False
 
     def pause_video_received(self):
+        #TODO FILL IN DOCSTRING
+        """_summary_
+        """
         self.pause_pressed = True
 
     def resume_video_received(self):
+        #TODO FILL IN DOCSTRING
+        """_summary_
+        """
         self.pause_pressed = False
 
     def reset_gif(self):
+        #TODO FILL IN DOCSTRING
+        """_summary_
+        """
         self.reset_flag = True
 
     def run(self):
+        #TODO FILL IN DOCSTRING
+        """_summary_
+        """
         while self._run_flag:
             if(self.input_frame != self.latest_input_frame):
 
@@ -95,5 +113,8 @@ class VideoThread(QThread):
             
 
     def stop(self):
+        #TODO FILL IN DOCSTRING
+        """_summary_
+        """
         self._run_flag = False
         self.wait()

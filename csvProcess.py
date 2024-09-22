@@ -40,13 +40,20 @@ class csvProcess():
             reader = csv.reader(csv_file)
             data_iterator = 0
             force_height_iterator = 0
+            reading_nums = False
             print("Copying data...")
             for row in reader:
                 if (force_height_iterator > self.header_row) and (data_iterator > int(1000 / self.subsample_rate)):
-                    # chooses Z coords depending on leg chosen
+                    if not reading_nums:
+                        self.highest_height = float(row[self.data_header])
+                        self.lowest_height = float(row[self.data_header])
+                        reading_nums = True
                     data_iterator = 0 
-                    #self.force_height.append(float(row[47 + (3 * self.leg_number)]) * 1000)
                     self.force_height.append(float(row[self.data_header]))
+                    if(float(row[self.data_header]) > self.highest_height):
+                        self.highest_height = float(row[self.data_header])
+                    if(float(row[self.data_header]) < self.lowest_height):
+                        self.lowest_height = float(row[self.data_header])
                 data_iterator += 1
                 force_height_iterator += 1
             print("Done.")

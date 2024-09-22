@@ -121,7 +121,7 @@ class videoGui():
             #self.graphWidget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
             
             #Ball Widget Initialization
-            self.ballWidget = BallWidget(self.width(), self.height())
+            self.ballWidget = BallWidget(self.width(), self.height(), self.csv_process.highest_height, self.csv_process.lowest_height)
             #self.ballWidget.resize(self.height() * (1.0/2) * (16.0/9) * (1.0/4) * (1/2), self.height() * (1.0/2))
             self.ballWidget.resize(10 ,400) 
             #self.ballWidget.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)

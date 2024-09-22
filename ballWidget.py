@@ -10,7 +10,7 @@ class BallWidget(QWidget):
     #TODO FILL IN DOCSTRING
     """_summary_
     """
-    def __init__(self, width, height):
+    def __init__(self, width, height, highest_height, lowest_height):
         super().__init__()
         self.ball_radius = 10
         self.ball_x = 50
@@ -18,6 +18,12 @@ class BallWidget(QWidget):
         self.setMinimumSize(200, 200)
         self.width = width
         self.height = height
+
+        self.highest_height = highest_height
+        self.lowest_height = lowest_height
+        self.ball_top = 30
+        self.ball_bottom = 250
+
         #top = 30
         #middle = 140
         #bottom = 250
@@ -42,6 +48,7 @@ class BallWidget(QWidget):
         painter.setBrush(QBrush(QColor(255, 0, 0)))  # Red color
         painter.drawEllipse(self.ball_x - self.ball_radius, self.ball_y - self.ball_radius, self.ball_radius * 2, self.ball_radius * 2)
 
+
     def update_ball_position(self, y):
         #TODO FILL IN DOCSTRING
         """_summary_
@@ -49,7 +56,6 @@ class BallWidget(QWidget):
         Args:
             y (_type_): _description_
         """
-        #self.ball_y = ((-(44.0/91) * (y-40)) + 30)
-        self.ball_y = (((-44000.0/93)* (y-0.04)) + 30) #TODO Replace MAGIC NUMBERS
-        #self.ball_y = 380
+        #self.ball_y = (((-44000.0/93)* (y-0.04)) + 30) #TODO Replace MAGIC NUMBERS
+        self.ball_y = ((self.ball_bottom - self.ball_top) / (self.lowest_height - self.highest_height)) * (y - self.highest_height)
         self.update()

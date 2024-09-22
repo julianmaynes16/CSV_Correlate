@@ -219,7 +219,8 @@ class videoGui():
 
             style = self.style()
             #Pause button setup
-            self.pause_icon = QIcon.fromTheme(QIcon.ThemeIcon.MediaPlaybackPause)
+            #self.pause_icon = QIcon.fromTheme(QIcon.ThemeIcon.MediaPlaybackPause)
+            self.pause_icon = QIcon.fromTheme("media-playback-pause")
             self._pause_action = self.video_toolbar.addAction(self.pause_icon, "Pause")
             self._pause_action.setCheckable(True)
 
@@ -469,6 +470,14 @@ class videoGui():
                         self.crosshair_cursor.setPos(self.crosshair_cursor.x() + 0.2)
             if event.key() == Qt.Key.Key_R:
                 self.reset_gif_send.emit()
+            if event.key() == Qt.Key.Key_L:
+                self.toggle_link()
+            if event.key() == Qt.Key.Key_Space or event.key() == Qt.Key.Key_K:
+                self.toggle_pause()
+            if event.key() == Qt.Key.Key_Comma:
+                self.previousStep()
+            if event.key() == Qt.Key.Key_Period:
+                self.nextStep()
 
 
         def toggle_link(self):

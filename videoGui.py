@@ -516,13 +516,13 @@ class videoGui():
             if event.key() == Qt.Key.Key_R:
                 self.reset_gif_send.emit()
             if event.key() == Qt.Key.Key_L:
-                self.toggle_link()
-            if event.key() == Qt.Key.Key_Space or event.key() == Qt.Key.Key_K:
-                self.toggle_pause()
+                self._link_action.trigger()
+            if event.key() == Qt.Key.Key_K:
+                self._pause_action.trigger()
             if event.key() == Qt.Key.Key_Comma:
-                self.previousStep()
+                self._previous_step_action.trigger()
             if event.key() == Qt.Key.Key_Period:
-                self.nextStep()
+                self._next_step_action.trigger()
 
 
         def toggle_link(self):
@@ -541,16 +541,16 @@ class videoGui():
             """_summary_
             """
             # Linked data time is the data time that matches the video time
-           self.linked_data_time = self.crosshair_cursor.x()
-           self.linked_video_pos = self.video_slider.value()
-           self.link_pressed = True
-           self._link_action.setText("Unlink")
-           self.messagebox.setText(f"Synced. Time difference = {round((self.linked_data_time - self.linked_video_pos), 2)} seconds")
-           self.crosshair_cursor.setMovable(False)
-           self.crosshair_cursor.setPen(self.cursor_pen_link)
-           video_step_list = []
-           print("Video steps:")
-           for time in self.csv_process.step_list:
+            self.linked_data_time = self.crosshair_cursor.x()
+            self.linked_video_pos = self.video_slider.value()
+            self.link_pressed = True
+            self._link_action.setText("Unlink")
+            self.messagebox.setText(f"Synced. Time difference = {round((self.linked_data_time - self.linked_video_pos), 2)} seconds")
+            self.crosshair_cursor.setMovable(False)
+            self.crosshair_cursor.setPen(self.cursor_pen_link)
+            video_step_list = []
+            print("Video steps:")
+            for time in self.csv_process.step_list:
                 link_step_diff = time - self.linked_data_time # if step is 400 and link is 500 it will be -100
                 video_step_time = round(self.linked_video_pos + link_step_diff)
                 if(math.floor(video_step_time / 60) < 0):

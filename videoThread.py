@@ -30,12 +30,12 @@ class VideoThread(QThread):
     pause_video_received = Signal()
     resume_video_received = Signal()
 
-    def __init__(self, video_file, input_frame, seconds_before_loop, playback_rate = 30):
+    def __init__(self, input_frame, seconds_before_loop, cap, playback_rate):
         super().__init__()
         self._run_flag = True
         self.input_frame = input_frame
         self.latest_input_frame = input_frame
-        self.cap = cv2.VideoCapture(video_file)
+        self.cap = cap
         self.cap.set(cv2.CAP_PROP_POS_FRAMES, input_frame)
         self.playback_rate = playback_rate
         self.seconds_before_loop = seconds_before_loop

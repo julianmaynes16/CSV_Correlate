@@ -16,9 +16,11 @@ class videoGui():
     #TODO FILL IN DOCSTRING
     """_summary_
     """
-    def __init__(self, video_path, csv_process, header_name, seconds_before_loop = 5):
+    def __init__(self, video_path, csv_process, header_name, seconds_before_loop = 5, fps_reduced = 15):
+        self.cap = cv2.VideoCapture(video_path)
         self.csv_process = csv_process
-        self.video_fps = 30
+        self.original_video_fps = cv2.CAP_PROP_FPS
+        self.fps_reduced = fps_reduced
         self.input_frame = 0
         self.seconds_before_loop = seconds_before_loop
         self.data_fps = self.csv_process.subsample_rate
@@ -46,7 +48,7 @@ class videoGui():
             data_fps = 1000
             graph_x_start = self.csv_process.force_time[0]
             #should be like 442.19
-        return(int(((1/self.video_fps) * input_frame) * data_fps)) # returns the frame where the input frame    
+        return(int(((1/self.original_video_fps) * input_frame) * data_fps)) # returns the frame where the input frame    
 
 
     class mainWindow(QMainWindow):
@@ -109,7 +111,7 @@ class videoGui():
 
 
             #Start video thread
-            self.thread = VideoThread(self.video_gui.video_file, self.video_gui.input_frame, self.video_gui.seconds_before_loop, playback_rate = 15)
+            self.thread = VideoThread(self.video_gui.input_frame, self.video_gui.seconds_before_loop, self.video_gui.cap, self.video_gui.fps_reduced)
             self.thread.change_pixmap_signal.connect(self.update_image)
             self.thread.change_pixmap_signal.connect(self.move_crosshair)
             self.thread.start()

@@ -56,6 +56,7 @@ def main():
     parse.add_argument('--header_row', '-d', type=int, default=None, help = 'Row where the data headers in the CSV can be found')
     parse.add_argument('--loop_duration', '-l', type=float, default=5.0, help='Length of the video loop used for syncing') 
     parse.add_argument('--data_sub_sample_rate', '-r', type=float, default=60.0, help='Subsample rate in Hz for CSV data')
+    parse.add_argument('--video_displayed_fps', '-f', type=float, default = 15.0, help='FPS of GIF video')
     
     args = parse.parse_args() 
     
@@ -88,7 +89,7 @@ def main():
     csv_process.copyForceTime()
     csv_process.stepChop()
 
-    video_gui = videoGui(args.video_path, csv_process, header_name, args.loop_duration)
+    video_gui = videoGui(args.video_path, csv_process, header_name, args.loop_duration, args.video_displayed_fps)
 
     main_window = video_gui.mainWindow(csv_process, video_gui)
     

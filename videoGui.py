@@ -48,94 +48,6 @@ class videoGui():
             #should be like 442.19
         return(int(((1/self.video_fps) * input_frame) * data_fps)) # returns the frame where the input frame    
 
-    def playVideo(self):
-        #TODO FILL IN DOCSTRING
-        """_summary_
-        """
-        video_frame = 0
-        cap = cv2.VideoCapture(self)
-        if (cap.isOpened()== False):
-            print("Error playing video...")
-        else:
-            print("Playing...")
-        last_imshow_time = time.time()
-        frame_rate = cap.get(cv2.CAP_PROP_FPS)
-        print(f"fps: {frame_rate}")
-        while(cap.isOpened()):
-            # Capture frame-by-frame
-            ret, frame = cap.read()
-
-            while (time.time() - last_imshow_time)< (1/frame_rate):
-                pass
-            
-            video_frame+=1
-            if ret == True:
-                # Display the resulting frame
-                last_imshow_time = time.time()
-                cv2.imshow('Frame', frame)
-                # Press Q on keyboard to exit
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
-                
-            # Break the loop
-            else:
-                break
-
-        # When everything done, release
-        # the video capture object
-        cap.release()
-
-        # Closes all the frames
-        cv2.destroyAllWindows()
-
-    def playVideoGif(self):
-        #TODO FILL IN DOCSTRING
-        """_summary_
-        """
-        video_frame = 0
-        cap = cv2.VideoCapture(self.video_file)
-        cap.set(1, self.input_frame)
-        if (cap.isOpened()== False):
-            print("Error playing video...")
-        else:
-            print("Playing...")
-        last_imshow_time = time.time()
-        loop_begin = time.time()
-        frame_rate = cap.get(cv2.CAP_PROP_FPS)
-        print(f"fps: {frame_rate}")
-        while(cap.isOpened()):
-            # Capture frame-by-frame
-            
-            if ((time.time() - loop_begin) > self.seconds_before_loop):
-                print(f"frame: {self.input_frame}")
-                cap.set(1, self.input_frame)
-                loop_begin = time.time()
-            ret, frame = cap.read()
-
-            while (time.time() - last_imshow_time)< (1/frame_rate):
-                pass
-            
-            video_frame+=1
-            if ret == True:
-                # Display the resulting frame
-                
-                last_imshow_time = time.time()
-                cv2.imshow('Frame', frame)
-                #show_diff = show_time_begin - show_time_end
-                # Press Q on keyboard to exit
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
-                
-            # Break the loop
-            else:
-                break
-            
-        # When everything done, release
-        # the video capture object
-        cap.release()
-
-        # Closes all the frames
-        cv2.destroyAllWindows()
 
     class mainWindow(QMainWindow):
         #TODO FILL IN DOCSTRING
@@ -229,7 +141,7 @@ class videoGui():
             #Pause button setup
             #self.pause_icon = QIcon.fromTheme(QIcon.ThemeIcon.MediaPlaybackPause)
             self.pause_icon = QIcon.fromTheme("media-playback-pause")
-            self._pause_action = self.video_toolbar.addAction(self.pause_icon, "Pause")
+            self._pause_action = self.video_toolbar.addAction(self.pause_icon, "Pause (K)")
             self._pause_action.setCheckable(True)
 
             # Make button background stay transparent
@@ -251,7 +163,7 @@ class videoGui():
             
             #Link button setup
             link_icon = QIcon.fromTheme(QIcon.ThemeIcon.InsertLink)
-            self._link_action = self.video_toolbar.addAction(link_icon, "Link")
+            self._link_action = self.video_toolbar.addAction(link_icon, "Link (L)")
             self._link_action.triggered.connect(self.toggle_link)
             self._link_action.setCheckable(True)
             self.link_pressed = False
@@ -270,7 +182,7 @@ class videoGui():
             """)
 
             previous_step_icon = QIcon.fromTheme(QIcon.ThemeIcon.GoPrevious)
-            self._previous_step_action = self.video_toolbar.addAction(previous_step_icon, "Previous Estimated Footstep")
+            self._previous_step_action = self.video_toolbar.addAction(previous_step_icon, "Previous Estimated Footstep (,)")
             self._previous_step_action.triggered.connect(self.previousStep)
             self._previous_tool_button = self.video_toolbar.widgetForAction(self._previous_step_action)
             self._previous_tool_button.setStyleSheet("""
@@ -288,7 +200,7 @@ class videoGui():
 
             self.current_step_viewing = 0
             next_step_icon = QIcon.fromTheme(QIcon.ThemeIcon.GoNext)
-            self._next_step_action = self.video_toolbar.addAction(next_step_icon, "Next Estimated Footstep")
+            self._next_step_action = self.video_toolbar.addAction(next_step_icon, "Next Estimated Footstep (.)")
             self._next_step_action.triggered.connect(self.nextStep)
             self._next_tool_button = self.video_toolbar.widgetForAction(self._next_step_action)
             self._next_tool_button.setStyleSheet("""
@@ -330,7 +242,11 @@ class videoGui():
             self.instructions_box.insertPlainText("Match up the video slider with its appropriate graph position and link \n")
             self.instructions_box.insertPlainText("After linking control video and graph line using the video slider\n \n")
             self.instructions_box.insertPlainText("Controls: \n")
-            self.instructions_box.insertPlainText("Reset Gif playback                            R \n")
+            self.instructions_box.insertPlainText("Reset gif playback                            R \n")
+            self.instructions_box.insertPlainText("Link video and graph                       L \n")
+            self.instructions_box.insertPlainText("Pause gif playback                           K \n")
+            self.instructions_box.insertPlainText("Skip to next footstep                        . \n")
+            self.instructions_box.insertPlainText("Revert to previous footstep              , \n")
             self.instructions_box.insertPlainText("Move graph line back                       Left Arrow\n")
             self.instructions_box.insertPlainText("Move graph line forward                  Right Arrow \n")
             self.instructions_box.insertPlainText("Moves graph line back slower          Shift +  Left Arrow\n")

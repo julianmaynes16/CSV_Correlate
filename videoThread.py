@@ -69,13 +69,6 @@ class VideoThread(QThread):
             if(self.input_frame != self.latest_input_frame):
 
                 self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.input_frame)
-                #View frame on pause
-                # ret, frame = self.cap.read()
-                # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                # height, width, channel = frame.shape
-                # img = QImage(frame, width, height, QImage.Format_RGB888)
-                # pix = QPixmap.fromImage(img)
-                # self.change_pixmap_signal.emit(GifState(pix, frames_since_begin / self.cap.get(cv2.CAP_PROP_FPS)))
 
             self.latest_input_frame = self.input_frame
             if(self.pause_pressed):
@@ -92,8 +85,7 @@ class VideoThread(QThread):
             # switch to using frames, update methods
             # Number of frames needed to pass before looping back (Gif)
             frames_before_loop = self.seconds_before_loop * self.cap.get(cv2.CAP_PROP_FPS)
-            #print(self.input_frame)
-            #print(f"Current frame: {self.cap.get(cv2.CAP_PROP_POS_FRAMES)}")
+            
             # How many fames have passed in any given amount of time
             frames_since_begin = (self.cap.get(cv2.CAP_PROP_POS_FRAMES) - self.input_frame)
             # If goes past gif alloted time

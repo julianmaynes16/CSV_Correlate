@@ -7,8 +7,7 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 class BallWidget(QWidget):
-    #TODO FILL IN DOCSTRING
-    """_summary_
+    """Manages Ball Actions
     """
     def __init__(self, width, height, highest_height, lowest_height):
         super().__init__()
@@ -31,11 +30,10 @@ class BallWidget(QWidget):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         
     def paintEvent(self, event):
-        #TODO FILL IN DOCSTRING
-        """_summary_
+        """Called automatically on update to display the ball
 
         Args:
-            event (_type_): _description_
+            event (QPaintEvent): instance of QPaintEvent, called automatically
         """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
@@ -50,12 +48,10 @@ class BallWidget(QWidget):
 
 
     def update_ball_position(self, y):
-        #TODO FILL IN DOCSTRING
-        """_summary_
+        """ Update red ball position based on where the line intersects the graph
 
         Args:
-            y (_type_): _description_
+            y (float): Current graph y position where gif line intersects graph
         """
-        #self.ball_y = (((-44000.0/93)* (y-0.04)) + 30) #TODO Replace MAGIC NUMBERS
-        self.ball_y = ((self.ball_bottom - self.ball_top) / (self.lowest_height - self.highest_height)) * (y - self.highest_height)
+        self.ball_y = ((self.ball_bottom - self.ball_top) / (self.lowest_height - self.highest_height)) * (y - self.highest_height) + self.ball_top
         self.update()

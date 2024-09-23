@@ -16,8 +16,7 @@ from ballWidget import *
 from bisect import bisect_left
 
 class csvProcess():
-    #TODO FILL IN DOCSTRING
-    """_summary_
+    """Processes CSV and returns useful data
     """
     def __init__(self, csv_path, data_header, subsample_rate=60, header_row = 0):
         self.force_file = csv_path
@@ -57,6 +56,9 @@ class csvProcess():
                 data_iterator += 1
                 force_height_iterator += 1
             print("Done.")
+            #print("Max height: " + str(self.highest_height))
+            #print("Low height: " + str(self.lowest_height))
+
             
     def copyForceTime(self):
         """ Returns all low level time samples in accordance with freq interval
@@ -74,8 +76,7 @@ class csvProcess():
                 force_time_iterator += 1
 
     def stepChop(self):
-        #TODO FILL IN DOCSTRING
-        """_summary_
+        """Returns list of times where data spikes (steps) occur
         """
         recent_high = 0
         plateu = False
@@ -107,13 +108,12 @@ class csvProcess():
                         self.step_list.append(round(self.force_time[i] - self.detection_offset))
                 
     def barXToY(self, bar_x):
-        #TODO FILL IN DOCSTRING
-        """_summary_
+        """Converts a graph time to its corresponding height 
 
         Args:
-            bar_x (_type_): _description_
+            bar_x (float): Time(x) in the graph  
 
         Returns:
-            _type_: _description_
+            float: current graph y
         """
         return (self.force_height[bisect_left(self.force_time, bar_x)])

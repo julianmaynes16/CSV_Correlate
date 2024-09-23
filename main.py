@@ -23,16 +23,15 @@ def main():
             return headers
         
     def headerToIndex(csv_path, header_string, header_row = 0):
-        #TODO FILL IN DOCSTRING
-        """_summary_
+        """ Returns what index / column each header is at 
 
         Args:
-            csv_path (_type_): _description_
-            header_string (_type_): _description_
-            header_row (int, optional): _description_. Defaults to 0.
+            csv_path (string): Path to csv
+            header_string (string): Header title to get the index of
+            header_row (int, optional): Row all of the headers lie on. Defaults to 0.
 
         Returns:
-            _type_: _description_
+            int: index of what column a header is located in
         """
         row_index = 0
         with open(csv_path,'r') as f:
@@ -41,7 +40,6 @@ def main():
                 if(row_index == header_row):
                     headers = row
                 row_index += 1
-            #headers = next(reader)
         header_index = 0
         for header in headers:
             if(header == header_string):

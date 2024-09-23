@@ -13,8 +13,7 @@ from csvProcess import *
 
 
 class videoGui():
-    #TODO FILL IN DOCSTRING
-    """_summary_
+    """Contains main window and other initializing data to input into window functions
     """
     def __init__(self, video_path, csv_process, header_name, seconds_before_loop = 5, fps_reduced = 15):
         self.cap = cv2.VideoCapture(video_path)
@@ -30,16 +29,15 @@ class videoGui():
         self.header_name = header_name
 
     def inputFrameToGraphXFrame(self, data_type, input_frame):
-        #TODO FILL IN DOCSTRING better explain this one
-        """Turn convert input frame into an x coordinate
+        
+        """Converts input frame of video into an x coordinate knowing the sampling rate of the csv data
 
         Args:
-            data_type (_type_): _description_
-            input_frame (_type_): _description_
+            data_type (string): Type of data the CSV is. Can either be "mocap" or "force"
+            input_frame (int): Video frame 
         """
         # we know the first x by the first index of time
         # The camera fps should be calculated
-        # The Video is 30 frames
         # So we need to get a starting value
         if(data_type == "mocap"):
             data_fps = 120
@@ -48,12 +46,11 @@ class videoGui():
             data_fps = 1000
             graph_x_start = self.csv_process.force_time[0]
             #should be like 442.19
-        return(int(((1/self.original_video_fps) * input_frame) * data_fps)) # returns the frame where the input frame    
+        return(int(((1/self.original_video_fps) * input_frame) * data_fps)) # returns the frame where the input frame is     
 
 
     class mainWindow(QMainWindow):
-        #TODO FILL IN DOCSTRING
-        """_summary_
+        """Main control and initialization for application operations
         """
         pause_video_send = Signal()
         resume_video_send = Signal()
@@ -295,7 +292,6 @@ class videoGui():
             print("Finished Initialization.")
 
         def getVideoHeightWidth(self, proportion=0.5, window_size=(1080,1920), primary_axis='height', aspect_ratio=16.0/9.0, max_secondary_proportion=0.8):
-            #TODO FILL IN DOCSTRING
             """Reduces a video's dimensions when resizing window
 
             Args:
@@ -306,7 +302,7 @@ class videoGui():
                 max_secondary_proportion (float, optional): _description_. Defaults to 0.8.
 
             Returns:
-                _type_: _description_
+                tuple: resized video dimensions according to current window dimensions
             """
             match primary_axis:
                 case 'height':
@@ -331,11 +327,10 @@ class videoGui():
             return tuple(output_size)
 
         def update_image(self, gif_state): 
-            #TODO FILL IN DOCSTRING
-            """_summary_
+            """Moves video to the next frame
 
             Args:
-                gif_state (_type_): _description_
+                gif_state (GifState): contains, importantly, the next video frame
             """
             if(not self.pause_pressed):
                 #Prev was 800,
@@ -343,11 +338,10 @@ class videoGui():
                 self.label.setPixmap(gif_state.pixmap.scaled(vid_size[0], vid_size[1], Qt.KeepAspectRatio, Qt.SmoothTransformation))
             
         def move_crosshair(self, gif_state):
-            #TODO FILL IN DOCSTRING
-            """_summary_
+            """ Moves the orange GIF line forward in time
 
             Args:
-                gif_state (_type_): _description_
+                gif_state (GifState): contains, importantly, time since the gif has started, controlling the orange line
             """
             if(not self.pause_pressed):
                 # Move crosshair
@@ -357,8 +351,7 @@ class videoGui():
                 self.ballWidget.update_ball_position(self.csv_process.barXToY(self.crosshair_v.x()))
 
         def pause(self):
-            #TODO FILL IN DOCSTRING
-            """_summary_
+            """Pauses video and moving elements
             """
             self.pause_pressed = True
             self._pause_action.setIcon(QIcon.fromTheme(QIcon.ThemeIcon.MediaPlaybackStart))
@@ -366,8 +359,7 @@ class videoGui():
             self.pause_video_send.emit()
             
         def resume(self):
-            #TODO FILL IN DOCSTRING
-            """_summary_
+            """Unpauses video and moving elements
             """
             if self.pause_pressed:
                 self.pause_pressed = False
@@ -376,8 +368,7 @@ class videoGui():
                 self.resume_video_send.emit()
 
         def nextStep(self):
-            #TODO FILL IN DOCSTRING
-            """_summary_
+            """Advances graph line, video slider, and video frame to the next detected step
             """
             # 8 steps, max is 7
             if(self.link_pressed and self.current_step_viewing < len(self.csv_process.step_list) - 1):
@@ -389,22 +380,20 @@ class videoGui():
                 #self.messagebox.setText(f"Step: {self.current_step_viewing}")
 
         def previousStep(self):
-            #TODO FILL IN DOCSTRING
-            """_summary_
+            """ Reverts graph line, video slider, and video frame to the previous detected step/data spike
             """
-            # 8 steps, max is 7
+            
             if(self.link_pressed and self.current_step_viewing > 0):
                 self.current_step_viewing -= 1
                 self.crosshair_cursor.setPos(self.csv_process.step_list[self.current_step_viewing])
                 link_step_diff = self.csv_process.step_list[self.current_step_viewing] - self.linked_data_time # if step is 400 and link is 500 it will be -100
                 self.video_slider.setValue(self.linked_video_pos + link_step_diff)
                 self.updateVideoFrame()
-                #self.messagebox.setText(f"Step: {self.current_step_viewing}")
+                
 
         
         def toggle_pause(self):
-            #TODO FILL IN DOCSTRING
-            """_summary_
+            """ Toggles between pause and resume depending on what was pressed
             """
             if self._pause_action.isChecked():
                 self.pause()
@@ -412,11 +401,10 @@ class videoGui():
                 self.resume()
 
         def keyPressEvent(self, event):
-            #TODO FILL IN DOCSTRING
-            """_summary_
+            """Manages key presses
 
             Args:
-                event (_type_): _description_
+                event (QKeyEvent) Automatically passed in as an instance of the system
             """
             if(not self.link_pressed):
                 if event.key() == Qt.Key.Key_Left:
@@ -444,8 +432,7 @@ class videoGui():
 
 
         def toggle_link(self):
-            #TODO FILL IN DOCSTRING
-            """"
+            """" Toggles link on and off depending on what was already pressed
             """
             if self._link_action.isChecked():
                 self.link()
@@ -455,8 +442,7 @@ class videoGui():
 
 
         def link(self):
-            #TODO FILL IN DOCSTRING
-            """_summary_
+            """Links video to graph and video slider to graph line
             """
             # Linked data time is the data time that matches the video time
             self.linked_data_time = self.crosshair_cursor.x()
@@ -466,20 +452,19 @@ class videoGui():
             self.messagebox.setText(f"Synced. Time difference = {round((self.linked_data_time - self.linked_video_pos), 2)} seconds")
             self.crosshair_cursor.setMovable(False)
             self.crosshair_cursor.setPen(self.cursor_pen_link)
-            video_step_list = []
             print("Video steps:")
             for time in self.csv_process.step_list:
                 link_step_diff = time - self.linked_data_time # if step is 400 and link is 500 it will be -100
                 video_step_time = round(self.linked_video_pos + link_step_diff)
                 if(math.floor(video_step_time / 60) < 0):
                     continue
-                print(f"{math.floor(video_step_time / 60)}:{str(video_step_time % 60).rjust(2, "0")}  ") #TODO Consider making a helper funtion for MM:SS conversion
+                print(self.timeFormat(video_step_time))
           
-               
+        def timeFormat(self, video_step_time):
+            return (f"{math.floor(video_step_time / 60)}:{str(video_step_time % 60).rjust(2, "0")}  ")    
 
         def unlink(self):
-            #TODO FILL IN DOCSTRING
-            """_summary_
+            """Unlink video and graph, make crosshair oveable again
             """
             self.link_pressed = False
             self._link_action.setText("Link")
@@ -489,8 +474,7 @@ class videoGui():
 
         # Set Video to a frame
         def updateVideoFrame(self):
-            #TODO FILL IN DOCSTRING
-            """_summary_
+            """ Update video grame, video slider time, and redline position
             """
             
             self.thread.input_frame = (round(self.video_slider.value() * self.thread.cap.get(cv2.CAP_PROP_FPS)))
@@ -501,11 +485,10 @@ class videoGui():
 
     
         def closeEvent(self,event):
-            #TODO FILL IN DOCSTRING
-            """_summary_
+            """ Close the application
 
             Args:
-                event (_type_): _description_
+                event (QCloseEvent): Event automatically called that helps close the program
             """
             self.thread.stop()
             event.accept()

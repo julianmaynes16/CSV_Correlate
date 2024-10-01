@@ -73,6 +73,14 @@ class VideoThread(QThread):
             if(self.pause_pressed):
                 continue
                 
+
+            ret, frame = self.cap.read()
+            if ret:
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                height, width, channel = frame.shape
+                img = QImage(frame, width, height, QImage.Format_RGB888)
+                pix = QPixmap.fromImage(img)
+
             #fps
             #print(1.0/self.playback_rate)
             if(time.time() - self.thirtyfps_begin) < (1.0/self.playback_rate):
@@ -95,13 +103,8 @@ class VideoThread(QThread):
                 frames_since_begin = 0
                 self.reset_flag = False
             #update image
-            ret, frame = self.cap.read()
-            if ret:
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                height, width, channel = frame.shape
-                img = QImage(frame, width, height, QImage.Format_RGB888)
-                pix = QPixmap.fromImage(img)
-                self.change_pixmap_signal.emit(GifState(pix, frames_since_begin / self.cap.get(cv2.CAP_PROP_FPS)))
+            
+            self.change_pixmap_signal.emit(GifState(pix, frames_since_begin / self.cap.get(cv2.CAP_PROP_FPS)))
             
 
     def stop(self):

@@ -40,6 +40,11 @@ class VideoThread(QThread):
         self.thirtyfps_begin = time.time()
         self.pause_pressed = False
         self.reset_flag = False
+        print("loop time: " + str(seconds_before_loop))
+        print("input frame: " +  str(self.input_frame))
+        print("playback_rate: " + str(self.playback_rate))
+        print("Actual fps: " + str(cv2.CAP_PROP_FPS))
+        print("Actual fps pt 2: " + str(self.cap.get(cv2.CAP_PROP_FPS)))
 
     def pause_video_received(self):
         """Pause video playback
@@ -69,11 +74,11 @@ class VideoThread(QThread):
                 continue
                 
             #fps
-            
+            #print(1.0/self.playback_rate)
             if(time.time() - self.thirtyfps_begin) < (1.0/self.playback_rate):
                 continue
-
-            
+            #print(time.time())
+            #print(str(time.time() - self.thirtyfps_begin))
             self.thirtyfps_begin = time.time()
             # gif
             # switch to using frames, update methods
@@ -82,13 +87,14 @@ class VideoThread(QThread):
             
             # How many fames have passed in any given amount of time
             frames_since_begin = (self.cap.get(cv2.CAP_PROP_POS_FRAMES) - self.input_frame)
+            print(frames_since_begin)
             # If goes past gif alloted time
             if ((frames_since_begin > frames_before_loop) or (frames_since_begin < 0) or (self.reset_flag) or ((self.cap.get(cv2.CAP_PROP_POS_FRAMES) == self.cap.get(cv2.CAP_PROP_FRAME_COUNT)))):
                 self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.input_frame)
                 self.curr_frame = self.input_frame
                 frames_since_begin = 0
                 self.reset_flag = False
-            
+            #update image
             ret, frame = self.cap.read()
             if ret:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)

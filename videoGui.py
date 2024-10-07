@@ -7,6 +7,7 @@ import pyqtgraph as pg
 import cv2
 import time
 import math
+from config import speed_list
 from videoThread import *
 from ballWidget import *
 from csvProcess import *
@@ -214,6 +215,17 @@ class videoGui():
                     background-color: transparent;
                 }
             """)
+            
+    
+            #speed_icon = QIcon.fromTheme(QIcon.ThemeIcon.GoNext)
+            self.speed_box = QComboBox(self)
+            #self.speed_box = self.video_toolbar.addAction("Set video speed")
+            self.video_toolbar.addWidget(self.speed_box)
+            for speed in speed_list:
+                self.speed_box.addItem(str(speed) + "x")
+            self.speed_box.currentIndexChanged.connect(self.thread.num_changed)
+            self.speed_box.activated.connect(self.speed_box_activated)
+            self.speed_box.setCurrentIndex(3)
 
 
             # Global message box
@@ -346,6 +358,7 @@ class videoGui():
             if(not self.pause_pressed):
                 # Move crosshair
                 self.crosshair_v.setPos(self.crosshair_cursor.x() + gif_state.time)
+                #print(f"GifState time: {gif_state.time}")
 
                 # Update Ball Position
                 self.ballWidget.update_ball_position(self.csv_process.barXToY(self.crosshair_v.x()))
@@ -379,6 +392,8 @@ class videoGui():
                 self.updateVideoFrame()
                 #self.messagebox.setText(f"Step: {self.current_step_viewing}")
 
+        
+
         def previousStep(self):
             """ Reverts graph line, video slider, and video frame to the previous detected step/data spike
             """
@@ -390,7 +405,7 @@ class videoGui():
                 self.video_slider.setValue(self.linked_video_pos + link_step_diff)
                 self.updateVideoFrame()
                 
-
+        
         
         def toggle_pause(self):
             """ Toggles between pause and resume depending on what was pressed
@@ -471,6 +486,9 @@ class videoGui():
             self.messagebox.setText(f"Unsynced.")
             self.crosshair_cursor.setMovable(True)
             self.crosshair_cursor.setPen(self.cursor_pen)
+
+        def speed_box_activated(self):
+            self.speed_box.clearFocus()
 
         # Set Video to a frame
         def updateVideoFrame(self):
